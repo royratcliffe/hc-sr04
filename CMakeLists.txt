@@ -6,6 +6,6 @@ project(hc-sr04)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GPIOD REQUIRED libgpiod)
 
-add_executable(hc-sr04 main.c)
+add_executable(hc-sr04 main.c dev.c)
 target_include_directories(hc-sr04 PRIVATE ${GPIOD_INCLUDE_DIRS})
 target_link_libraries(hc-sr04 PRIVATE ${GPIOD_LIBRARIES})
