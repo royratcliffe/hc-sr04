@@ -7,13 +7,39 @@
 
 const char *const dev = "/dev";
 
+static int dev_entry_path(const struct dirent *entry, char **path);
+static int gpiochip_device_filter(const struct dirent *entry);
+static void free_entries(struct dirent **entries, ssize_t num_entries);
+
+ssize_t scan_dev_for_gpiochips(char ***paths) {
+  struct dirent **entries;
+  int num_entries = scandir(dev, &entries, gpiochip_device_filter, NULL);
+  if (num_entries < 0) {
+    return -1;
+  }
+  char **found = malloc(num_entries * sizeof(char *));
+  if (!found) {
+    free_entries(entries, num_entries);
+    return -1;
+  }
+  int num_found = 0;
+  for (int i = 0; i < num_entries; i++) {
+    char *path;
+    if (dev_entry_path(entries[i], &path) < 0) {
+      perror("asprintf");
+      free_paths(found, num_found);
+      free_entries(entries, num_entries);
+      return -1;
+    }
+    found[num_found++] = path;
+  }
+  free_entries(entries, num_entries);
+  *paths = found;
+  return num_found;
+}
+
 int dev_entry_path(const struct dirent *entry, char **path) { return asprintf(path, "%s/%s", dev, entry->d_name); }
 
-/*!
- * \brief Filter function for scandir to find GPIO chip devices.
- * \param entry Directory entry to check.
- * \return 1 if the entry is a GPIO chip device, 0 otherwise.
- */
 int gpiochip_device_filter(const struct dirent *entry) {
   char *path;
   if (dev_entry_path(entry, &path) < 0) {
@@ -46,31 +72,4 @@ void free_paths(char **paths, ssize_t num_paths) {
     free(paths[i]);
   }
   free(paths);
-}
-
-ssize_t scan_dev_for_gpiochips(char ***paths) {
-  struct dirent **entries;
-  int num_entries = scandir(dev, &entries, gpiochip_device_filter, NULL);
-  if (num_entries < 0) {
-    return -1;
-  }
-  char **found = malloc(num_entries * sizeof(char *));
-  if (!found) {
-    free_entries(entries, num_entries);
-    return -1;
-  }
-  int num_found = 0;
-  for (int i = 0; i < num_entries; i++) {
-    char *path;
-    if (dev_entry_path(entries[i], &path) < 0) {
-      perror("asprintf");
-      free_paths(found, num_found);
-      free_entries(entries, num_entries);
-      return -1;
-    }
-    found[num_found++] = path;
-  }
-  free_entries(entries, num_entries);
-  *paths = found;
-  return num_found;
 }
