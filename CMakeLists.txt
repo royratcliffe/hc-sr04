@@ -11,7 +11,7 @@ configure_file(
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GPIOD REQUIRED libgpiod)
 
-add_executable(hc-sr04 main.c dev.c)
+add_executable(hc-sr04 main.c dev.c pr.c)
 target_include_directories(hc-sr04 PRIVATE . "${CMAKE_CURRENT_BINARY_DIR}")
 
 target_include_directories(hc-sr04 PRIVATE ${GPIOD_INCLUDE_DIRS})
