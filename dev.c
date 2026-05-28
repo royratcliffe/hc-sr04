@@ -25,7 +25,7 @@ int gpiochip_device_filter(const struct dirent *entry) {
    * reasonable trade-off.
    */
   struct stat st;
-  if (stat(path, &st) < 0 || S_ISLNK(st.st_mode)) {
+  if (lstat(path, &st) < 0 || S_ISLNK(st.st_mode)) {
     free(path);
     return 0;
   }
