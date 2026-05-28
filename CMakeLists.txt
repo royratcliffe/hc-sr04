@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.10)
+project(hc-sr04)
+
+# Find the libgpiod library. Typically, install the libgpiod-dev package on your
+# system to get the necessary headers and library files.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GPIOD REQUIRED libgpiod)
+
+add_executable(hc-sr04 main.c)
+target_include_directories(hc-sr04 PRIVATE ${GPIOD_INCLUDE_DIRS})
+target_link_libraries(hc-sr04 PRIVATE ${GPIOD_LIBRARIES})
