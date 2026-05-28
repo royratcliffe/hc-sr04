@@ -124,6 +124,104 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  struct gpiod_line_settings *line_settings = gpiod_line_settings_new();
+  if (!line_settings) {
+    pr_err("Failed to create line settings for echo pin\n");
+    return EXIT_FAILURE;
+  }
+  if (gpiod_line_settings_set_direction(line_settings, GPIOD_LINE_DIRECTION_INPUT) < 0) {
+    pr_err("Failed to set line direction for echo pin\n");
+    gpiod_line_settings_free(line_settings);
+    return EXIT_FAILURE;
+  }
+  if (gpiod_line_settings_set_edge_detection(line_settings, GPIOD_LINE_EDGE_BOTH) < 0) {
+    pr_err("Failed to set edge detection for echo pin\n");
+    gpiod_line_settings_free(line_settings);
+    return EXIT_FAILURE;
+  }
+
+  struct gpiod_line_config *line_config = gpiod_line_config_new();
+  if (!line_config) {
+    pr_err("Failed to create line config for echo pin\n");
+    gpiod_line_settings_free(line_settings);
+    return EXIT_FAILURE;
+  }
+  if (gpiod_line_config_add_line_settings(line_config, (unsigned int[]){(unsigned int)echo_line}, 1, line_settings) < 0) {
+    pr_err("Failed to add line settings for echo pin\n");
+    gpiod_line_config_free(line_config);
+    gpiod_line_settings_free(line_settings);
+    return EXIT_FAILURE;
+  }
+
+  struct gpiod_request_config *request_config = gpiod_request_config_new();
+  if (!request_config) {
+    pr_err("Failed to create request config for echo pin\n");
+    gpiod_line_config_free(line_config);
+    gpiod_line_settings_free(line_settings);
+    return EXIT_FAILURE;
+  }
+  gpiod_request_config_set_consumer(request_config, "hc-sr04");
+  struct gpiod_line_request *line_request = gpiod_chip_request_lines(echo_chip, request_config, line_config);
+  if (!line_request) {
+    pr_err("Failed to request echo line\n");
+    gpiod_request_config_free(request_config);
+    gpiod_line_config_free(line_config);
+    gpiod_line_settings_free(line_settings);
+    return EXIT_FAILURE;
+  }
+
+  uint64_t rising_edge_timestamp_ns = 0ULL;
+  enum gpiod_edge_event_type last_edge_event_type = GPIOD_EDGE_EVENT_FALLING_EDGE;
+  for (;;) {
+    int rc;
+    if ((rc = gpiod_line_request_wait_edge_events(line_request, 1000000000LL)) < 0) {
+      pr_err("Failed to wait for edge events on echo line\n");
+      return EXIT_FAILURE;
+    }
+    if (rc == 0) {
+      pr_info("Wait for edge events on echo line timed out\n");
+      continue;
+    }
+    struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(rc);
+    if (!buffer) {
+      pr_err("Failed to create edge event buffer for echo line\n");
+      return EXIT_FAILURE;
+    }
+    ssize_t num_events = gpiod_line_request_read_edge_events(line_request, buffer, rc);
+    if (num_events < 0) {
+      pr_err("Failed to read edge events for echo line\n");
+      gpiod_edge_event_buffer_free(buffer);
+      return EXIT_FAILURE;
+    }
+    for (ssize_t i = 0; i < num_events; i++) {
+      struct gpiod_edge_event *event = gpiod_edge_event_buffer_get_event(buffer, i);
+      if (!event) {
+        pr_err("Failed to get edge event from buffer for echo line\n");
+        gpiod_edge_event_buffer_free(buffer);
+        return EXIT_FAILURE;
+      }
+      enum gpiod_edge_event_type event_type = gpiod_edge_event_get_event_type(event);
+      uint64_t timestamp_ns = gpiod_edge_event_get_timestamp_ns(event);
+      pr_info("Received %s edge event on echo line at timestamp %lu ns\n", event_type == GPIOD_EDGE_EVENT_RISING_EDGE ? "rising" : "falling", timestamp_ns);
+      switch (event_type) {
+      case GPIOD_EDGE_EVENT_RISING_EDGE:
+        rising_edge_timestamp_ns = timestamp_ns;
+        break;
+      case GPIOD_EDGE_EVENT_FALLING_EDGE:
+        if (last_edge_event_type == GPIOD_EDGE_EVENT_RISING_EDGE) {
+          uint64_t pulse_width_ns = timestamp_ns - rising_edge_timestamp_ns;
+          pr_info("Pulse width: %lu ns\n", pulse_width_ns);
+        }
+        break;
+      default:
+        pr_err("Unknown edge event type %d on echo line\n", event_type);
+        break;
+      }
+      last_edge_event_type = event_type;
+    }
+    gpiod_edge_event_buffer_free(buffer);
+  }
+
   for (ssize_t i = 0; i < num_paths; i++) {
     gpiod_chip_close(chips[i]);
   }
