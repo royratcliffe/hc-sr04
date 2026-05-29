@@ -26,7 +26,6 @@ ssize_t scan_dev_for_gpiochips(char ***paths) {
   for (int i = 0; i < num_entries; i++) {
     char *path;
     if (dev_entry_path(entries[i], &path) < 0) {
-      perror("asprintf");
       free_paths(found, num_found);
       free_entries(entries, num_entries);
       return -1;
