@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <dirent.h>
+#include <sys/types.h>
 
 /*!
  * \brief Scan the /dev directory for GPIO chip devices.
