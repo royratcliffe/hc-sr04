@@ -20,10 +20,9 @@ void free_at_exit(void *car) {
 static void set_up(void) { atexit(clean_up); }
 
 static void clean_up(void) {
-  while (CONS_NOT_NIL_P(head)) {
-    struct cons *cell = head;
-    head = cons_cdr(cell);
-    free(cons_car(cell));
-    cons_free(cell);
+  struct cons *popped;
+  while (CONS_NOT_NIL_P(popped = cons_pop(&head))) {
+    free(cons_car(popped));
+    cons_free(popped);
   }
 }
