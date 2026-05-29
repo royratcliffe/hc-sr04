@@ -234,6 +234,18 @@ struct cons *cons_delete(struct cons **list, void *car);
 struct cons *cons_remove(struct cons **list, struct cons *cell);
 
 /*!
+ * \brief Pops the first cons cell from the list and returns it.
+ * \param list Pointer to the list head.
+ * \return The popped cons cell, or \c CONS_NIL if the list is empty.
+ * \details This function retrieves the first cons cell from the list (the cell
+ * pointed to by the list head), updates the list head to point to the next cell
+ * in the list (the cdr of the popped cell), and returns the popped cell. If the
+ * list is empty (i.e., if the list head is \c CONS_NIL), the function returns
+ * \c CONS_NIL to indicate that there are no cells to pop.
+ */
+struct cons *cons_pop(struct cons **list);
+
+/*!
  * \brief Reverses a linked list of cons cells in place.
  * \details This function takes a pointer to the head of a linked list of cons
  * cells and reverses the order of the cells in the list. It iteratively

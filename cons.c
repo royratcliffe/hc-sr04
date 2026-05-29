@@ -78,6 +78,13 @@ struct cons *cons_remove(struct cons **list, struct cons *cell) {
   return removed;
 }
 
+struct cons *cons_pop(struct cons **list) {
+  struct cons *cell = *list;
+  if (CONS_NIL_P(cell)) return CONS_NIL;
+  *list = cons_cdr(cell);
+  return cell;
+}
+
 void cons_reverse(struct cons **list) {
   /*
    * Maintain a pointer to the reversed list (initially CONS_NIL) and
