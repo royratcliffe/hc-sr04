@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
     if (rc == 0) {
-      pr_info("Wait for edge events on echo line timed out\n");
+      pr_debug("Wait for edge events on echo line timed out\n");
       continue;
     }
     struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(rc);
