@@ -1,5 +1,8 @@
+#include "call_at_exit.h"
 #include "dev.h"
+#include "gpio.h"
 #include "pr.h"
+#include "sleep.h"
 #include "version.h"
 
 #include <getopt.h>
@@ -123,70 +126,108 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  struct gpiod_line_settings *line_settings = gpiod_line_settings_new();
-  if (!line_settings) {
+  struct gpiod_line_settings *echo_settings = gpiod_line_settings_new();
+  if (!echo_settings) {
     pr_err("Failed to create line settings for echo pin\n");
     return EXIT_FAILURE;
   }
-  if (gpiod_line_settings_set_direction(line_settings, GPIOD_LINE_DIRECTION_INPUT) < 0) {
+  call_at_exit(line_settings_free, echo_settings);
+  if (gpiod_line_settings_set_direction(echo_settings, GPIOD_LINE_DIRECTION_INPUT) < 0) {
     pr_err("Failed to set line direction for echo pin\n");
-    gpiod_line_settings_free(line_settings);
     return EXIT_FAILURE;
   }
-  if (gpiod_line_settings_set_edge_detection(line_settings, GPIOD_LINE_EDGE_BOTH) < 0) {
+  if (gpiod_line_settings_set_edge_detection(echo_settings, GPIOD_LINE_EDGE_BOTH) < 0) {
     pr_err("Failed to set edge detection for echo pin\n");
-    gpiod_line_settings_free(line_settings);
     return EXIT_FAILURE;
   }
 
-  struct gpiod_line_config *line_config = gpiod_line_config_new();
-  if (!line_config) {
+  struct gpiod_line_settings *trig_settings = gpiod_line_settings_new();
+  if (!trig_settings) {
+    pr_err("Failed to create line settings for trig pin\n");
+    return EXIT_FAILURE;
+  }
+  call_at_exit(line_settings_free, trig_settings);
+  if (gpiod_line_settings_set_direction(trig_settings, GPIOD_LINE_DIRECTION_OUTPUT) < 0) {
+    pr_err("Failed to set line direction for trig pin\n");
+    return EXIT_FAILURE;
+  }
+
+  struct gpiod_line_config *echo_config = gpiod_line_config_new();
+  if (!echo_config) {
     pr_err("Failed to create line config for echo pin\n");
-    gpiod_line_settings_free(line_settings);
     return EXIT_FAILURE;
   }
-  if (gpiod_line_config_add_line_settings(line_config, (unsigned int[]){(unsigned int)echo_line}, 1, line_settings) < 0) {
+  call_at_exit(line_config_free, echo_config);
+  if (gpiod_line_config_add_line_settings(echo_config, (unsigned int[]){(unsigned int)echo_line}, 1, echo_settings) < 0) {
     pr_err("Failed to add line settings for echo pin\n");
-    gpiod_line_config_free(line_config);
-    gpiod_line_settings_free(line_settings);
     return EXIT_FAILURE;
   }
 
-  struct gpiod_request_config *request_config = gpiod_request_config_new();
-  if (!request_config) {
-    pr_err("Failed to create request config for echo pin\n");
-    gpiod_line_config_free(line_config);
-    gpiod_line_settings_free(line_settings);
+  struct gpiod_line_config *trig_config = gpiod_line_config_new();
+  if (!trig_config) {
+    pr_err("Failed to create line config for trig pin\n");
     return EXIT_FAILURE;
   }
-  gpiod_request_config_set_consumer(request_config, "hc-sr04");
-  struct gpiod_line_request *line_request = gpiod_chip_request_lines(echo_chip, request_config, line_config);
+  call_at_exit(line_config_free, trig_config);
+  if (gpiod_line_config_add_line_settings(trig_config, (unsigned int[]){(unsigned int)trig_line}, 1, trig_settings) < 0) {
+    pr_err("Failed to add line settings for trig pin\n");
+    return EXIT_FAILURE;
+  }
+
+  struct gpiod_request_config *echo_request_config = gpiod_request_config_new();
+  if (!echo_request_config) {
+    pr_err("Failed to create request config for echo pin\n");
+    return EXIT_FAILURE;
+  }
+  call_at_exit(request_config_free, echo_request_config);
+  gpiod_request_config_set_consumer(echo_request_config, "hc-sr04");
+  struct gpiod_line_request *line_request = gpiod_chip_request_lines(echo_chip, echo_request_config, echo_config);
   if (!line_request) {
     pr_err("Failed to request echo line\n");
-    gpiod_request_config_free(request_config);
-    gpiod_line_config_free(line_config);
-    gpiod_line_settings_free(line_settings);
+    return EXIT_FAILURE;
+  }
+
+  struct gpiod_request_config *trig_request_config = gpiod_request_config_new();
+  if (!trig_request_config) {
+    pr_err("Failed to create request config for trig pin\n");
+    return EXIT_FAILURE;
+  }
+  call_at_exit(request_config_free, trig_request_config);
+  gpiod_request_config_set_consumer(trig_request_config, "hc-sr04");
+  struct gpiod_line_request *trig_line_request = gpiod_chip_request_lines(trig_chip, trig_request_config, trig_config);
+  if (!trig_line_request) {
+    pr_err("Failed to request trig line\n");
     return EXIT_FAILURE;
   }
 
   uint64_t rising_edge_timestamp_ns = 0ULL;
   enum gpiod_edge_event_type last_edge_event_type = GPIOD_EDGE_EVENT_FALLING_EDGE;
   for (;;) {
-    int rc;
-    if ((rc = gpiod_line_request_wait_edge_events(line_request, 1000000000LL)) < 0) {
+    int max_events;
+    if ((max_events = gpiod_line_request_wait_edge_events(line_request, 60000000LL)) < 0) {
       pr_err("Failed to wait for edge events on echo line\n");
       return EXIT_FAILURE;
     }
-    if (rc == 0) {
+    if (max_events == 0) {
       pr_debug("Wait for edge events on echo line timed out\n");
+      if (gpiod_line_request_set_value(trig_line_request, trig_line, GPIOD_LINE_VALUE_ACTIVE) < 0) {
+        pr_err("Failed to set initial value for trig line\n");
+        return EXIT_FAILURE;
+      }
+      sleep_ns(10000000L);
+      if (gpiod_line_request_set_value(trig_line_request, trig_line, GPIOD_LINE_VALUE_INACTIVE) < 0) {
+        pr_err("Failed to set initial value for trig line\n");
+        return EXIT_FAILURE;
+      }
+      sleep_ns(60000000L);
       continue;
     }
-    struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(rc);
+    struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(max_events);
     if (!buffer) {
       pr_err("Failed to create edge event buffer for echo line\n");
       return EXIT_FAILURE;
     }
-    ssize_t num_events = gpiod_line_request_read_edge_events(line_request, buffer, rc);
+    ssize_t num_events = gpiod_line_request_read_edge_events(line_request, buffer, max_events);
     if (num_events < 0) {
       pr_err("Failed to read edge events for echo line\n");
       gpiod_edge_event_buffer_free(buffer);
@@ -209,7 +250,7 @@ int main(int argc, char *argv[]) {
       case GPIOD_EDGE_EVENT_FALLING_EDGE:
         if (last_edge_event_type == GPIOD_EDGE_EVENT_RISING_EDGE) {
           uint64_t pulse_width_ns = timestamp_ns - rising_edge_timestamp_ns;
-          pr_info("Pulse width: %lu ns\n", pulse_width_ns);
+          (void)printf("Pulse width: %lu ns\n", pulse_width_ns);
         }
         break;
       default:
