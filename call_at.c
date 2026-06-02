@@ -1,6 +1,7 @@
 #include "call_at.h"
 #include "cons.h"
 #include "containerof.h"
+#include "pr.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -14,7 +15,7 @@ struct call_at {
 void call_at(struct cons **ca, void (*func)(void *), void *arg1) {
   struct call_at *call_at = malloc(sizeof(struct call_at));
   if (call_at == NULL) {
-    perror("Failed to allocate memory for call_at entry");
+    pr_err("Failed to allocate memory for call_at entry");
     exit(EXIT_FAILURE);
   }
   cons_init(&call_at->cell, arg1);
