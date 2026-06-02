@@ -200,26 +200,43 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  enum gpiod_line_value trig_value = GPIOD_LINE_VALUE_ACTIVE;
+  int64_t timeout_ns = 10000000LL;
+  if (gpiod_line_request_set_value(trig_line_request, trig_line, trig_value) < 0) {
+    pr_err("Failed to set initial value for trig line\n");
+    return EXIT_FAILURE;
+  }
   uint64_t rising_edge_timestamp_ns = 0ULL;
   enum gpiod_edge_event_type last_edge_event_type = GPIOD_EDGE_EVENT_FALLING_EDGE;
   for (;;) {
     int max_events;
-    if ((max_events = gpiod_line_request_wait_edge_events(line_request, 60000000LL)) < 0) {
+    if ((max_events = gpiod_line_request_wait_edge_events(line_request, timeout_ns)) < 0) {
       pr_err("Failed to wait for edge events on echo line\n");
       return EXIT_FAILURE;
     }
     if (max_events == 0) {
       pr_debug("Wait for edge events on echo line timed out\n");
-      if (gpiod_line_request_set_value(trig_line_request, trig_line, GPIOD_LINE_VALUE_ACTIVE) < 0) {
+      switch (trig_value) {
+      case GPIOD_LINE_VALUE_ACTIVE:
+        trig_value = GPIOD_LINE_VALUE_INACTIVE;
+        timeout_ns = 60000000LL;
+        break;
+      case GPIOD_LINE_VALUE_INACTIVE:
+        trig_value = GPIOD_LINE_VALUE_ACTIVE;
+        timeout_ns = 10000000LL;
+        break;
+      default:
+        pr_warn("Unknown trig line value %d\n", trig_value);
+        trig_value = GPIOD_LINE_VALUE_ACTIVE;
+        timeout_ns = 10000000LL;
+        break;
+      }
+      if (gpiod_line_request_set_value(trig_line_request, trig_line, trig_value) < 0) {
         pr_err("Failed to set initial value for trig line\n");
         return EXIT_FAILURE;
       }
-      sleep_ns(10000000L);
-      if (gpiod_line_request_set_value(trig_line_request, trig_line, GPIOD_LINE_VALUE_INACTIVE) < 0) {
-        pr_err("Failed to set initial value for trig line\n");
-        return EXIT_FAILURE;
-      }
-      sleep_ns(60000000L);
+      pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %lu ns\n",
+               trig_value == GPIOD_LINE_VALUE_ACTIVE ? "active" : "inactive", timeout_ns);
       continue;
     }
     struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(max_events);
