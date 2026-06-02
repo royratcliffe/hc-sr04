@@ -1,3 +1,5 @@
+#define MS_TO_NS(ms) ((ms) * 1000000LL)
+
 /*!
  * \brief Sleep for a specified number of nanoseconds.
  *

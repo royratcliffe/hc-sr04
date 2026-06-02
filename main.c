@@ -39,7 +39,6 @@ int main(int argc, char *argv[]) {
 
   const char *echo_gpio = NULL;
   const char *trig_gpio = NULL;
-  pr_verbosity_set(pr_level_info);
   static const struct option longopts[] = {{"version", no_argument, NULL, 'V'},
                                            {"verbose", no_argument, NULL, 'v'},
                                            {"quietly", no_argument, NULL, 'q'},
@@ -201,7 +200,7 @@ int main(int argc, char *argv[]) {
   }
 
   enum gpiod_line_value trig_value = GPIOD_LINE_VALUE_ACTIVE;
-  int64_t timeout_ns = 10000000LL;
+  int64_t timeout_ns = MS_TO_NS(10);
   if (gpiod_line_request_set_value(trig_line_request, trig_line, trig_value) < 0) {
     pr_err("Failed to set initial value for trig line\n");
     return EXIT_FAILURE;
@@ -219,16 +218,16 @@ int main(int argc, char *argv[]) {
       switch (trig_value) {
       case GPIOD_LINE_VALUE_ACTIVE:
         trig_value = GPIOD_LINE_VALUE_INACTIVE;
-        timeout_ns = 60000000LL;
+        timeout_ns = MS_TO_NS(60);
         break;
       case GPIOD_LINE_VALUE_INACTIVE:
         trig_value = GPIOD_LINE_VALUE_ACTIVE;
-        timeout_ns = 10000000LL;
+        timeout_ns = MS_TO_NS(10);
         break;
       default:
         pr_warn("Unknown trig line value %d\n", trig_value);
         trig_value = GPIOD_LINE_VALUE_ACTIVE;
-        timeout_ns = 10000000LL;
+        timeout_ns = MS_TO_NS(10);
         break;
       }
       if (gpiod_line_request_set_value(trig_line_request, trig_line, trig_value) < 0) {
@@ -267,7 +266,7 @@ int main(int argc, char *argv[]) {
       case GPIOD_EDGE_EVENT_FALLING_EDGE:
         if (last_edge_event_type == GPIOD_EDGE_EVENT_RISING_EDGE) {
           uint64_t pulse_width_ns = timestamp_ns - rising_edge_timestamp_ns;
-          (void)printf("Pulse width: %lu ns\n", pulse_width_ns);
+          (void)printf("%lu\n", pulse_width_ns);
         }
         break;
       default:
