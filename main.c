@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
         }
         break;
       default:
-        pr_err("Unknown edge event type %d on echo line\n", event_type);
+        pr_warn("Unknown edge event type %d on echo line\n", event_type);
         break;
       }
       last_edge_event_type = event_type;
