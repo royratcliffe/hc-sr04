@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include <gpiod.h>
-
 int main(int argc, char *argv[]) {
   char **paths;
   ssize_t num_paths = scan_dev_for_gpiochips(&paths);
