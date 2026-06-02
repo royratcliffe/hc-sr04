@@ -24,7 +24,7 @@ static void clean_up(void) __attribute__((destructor));
 static struct cons *head = CONS_NIL;
 
 void call_at_exit(void (*func)(void *), void *arg1) {
-  struct call_at_exit *call = (struct call_at_exit *)malloc(sizeof(struct call_at_exit));
+  struct call_at_exit *call = malloc(sizeof(struct call_at_exit));
   if (call == NULL) {
     perror("Failed to allocate memory for call_at_exit entry");
     exit(EXIT_FAILURE);
