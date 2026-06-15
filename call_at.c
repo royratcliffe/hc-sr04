@@ -7,9 +7,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*!
+ * \brief Structure representing a scheduled function call.
+ *
+ * \details This structure is used to store information about a function that is
+ * scheduled to be called later. It contains a cons cell for storing the
+ * argument to be passed to the function, and a function pointer to the function
+ * itself.
+ *
+ * \note The cons cell's \c car field holds the argument to be passed to the
+ * function, while the \c cdr field is used to link multiple scheduled function
+ * calls together in a list.
+ */
 struct call_at {
-  struct cons cell;
-  void (*func)(void *);
+  struct cons cell;     /*!< Cell storing the argument to be passed to the function. */
+  void (*func)(void *); /*!< Pointer to the function to be called. */
 };
 
 void call_at(struct cons **ca, void (*func)(void *), void *arg1) {
