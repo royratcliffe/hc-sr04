@@ -301,7 +301,11 @@ int main(int argc, char *argv[]) {
       case GPIOD_EDGE_EVENT_FALLING_EDGE:
         if (last_edge_event_type == GPIOD_EDGE_EVENT_RISING_EDGE) {
           uint64_t pulse_width_ns = timestamp_ns - rising_edge_timestamp_ns;
-          (void)printf("%lu\n", pulse_width_ns);
+          if (pulse_width_ns > 0) {
+            (void)printf("%lu\n", pulse_width_ns);
+          } else {
+            pr_warn("Received falling edge event on echo line with non-positive pulse width\n");
+          }
         }
         break;
       default:
