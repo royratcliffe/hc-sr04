@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file dirent_ext.c
+ * \brief Implementation of extended dirent functions.
+ */
 #include "dirent_ext.h"
 
 #include <stdlib.h>

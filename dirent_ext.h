@@ -1,3 +1,15 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file dirent_ext.h
+ * \brief Header file for extended dirent functions.
+ */
+#ifndef DIRENT_EXT_H
+#define DIRENT_EXT_H
+
 #include <dirent.h>
 #include <sys/types.h>
 
@@ -16,3 +28,5 @@ int dir_entry_path(const char *dir, const struct dirent *entry, char **path);
  * \param num_entries Number of entries in the array.
  */
 void free_dir_entries(struct dirent **entries, ssize_t num_entries);
+
+#endif /* DIRENT_EXT_H */
