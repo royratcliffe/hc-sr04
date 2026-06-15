@@ -1,5 +1,5 @@
 #include "call_at_exit.h"
-#include "dev.h"
+#include "gpiochip.h"
 #include "gpio.h"
 #include "pr.h"
 #include "sleep.h"

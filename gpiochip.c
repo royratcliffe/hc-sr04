@@ -1,4 +1,4 @@
-#include "dev.h"
+#include "gpiochip.h"
 #include "dirent_ext.h"
 
 #include <stdlib.h>
