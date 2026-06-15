@@ -12,7 +12,7 @@
 
 int main(int argc, char *argv[]) {
   char **paths;
-  ssize_t num_paths = scan_dev_for_gpiochips(&paths);
+  ssize_t num_paths = scan_dir_for_gpiochip_paths("/dev", &paths);
   if (num_paths < 0) {
     pr_err("Failed to scan /dev for GPIO chip devices\n");
     return EXIT_FAILURE;
@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   struct gpiod_chip **chips = malloc(num_paths * sizeof(struct gpiod_chip *));
   if (!chips) {
     pr_err("Failed to allocate memory for chip pointers\n");
-    free_paths(paths, num_paths);
+    free_gpiochip_paths(paths, num_paths);
     return EXIT_FAILURE;
   }
   for (ssize_t i = 0; i < num_paths; i++) {
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
         gpiod_chip_close(chips[i]);
       }
       free(chips);
-      free_paths(paths, num_paths);
+      free_gpiochip_paths(paths, num_paths);
       return EXIT_FAILURE;
     }
     chips[i] = chip;
@@ -282,6 +282,6 @@ int main(int argc, char *argv[]) {
     gpiod_chip_close(chips[i]);
   }
   free(chips);
-  free_paths(paths, num_paths);
+  free_gpiochip_paths(paths, num_paths);
   return EXIT_SUCCESS;
 }
