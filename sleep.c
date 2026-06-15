@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file sleep.c
+ * \brief Implementation of sleep functions.
+ */
 #include "sleep.h"
 
 #include <errno.h>

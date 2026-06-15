@@ -1,3 +1,15 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file sleep.h
+ * \brief Header file for sleep functions.
+ */
+#ifndef SLEEP_H
+#define SLEEP_H
+
 #define MS_TO_NS(ms) ((ms) * 1000000LL)
 
 /*!
@@ -19,3 +31,5 @@
  * negative or too large.
  */
 int sleep_ns(long ns);
+
+#endif /* SLEEP_H */
