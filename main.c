@@ -1,6 +1,6 @@
 #include "call_at_exit.h"
-#include "gpiochip.h"
 #include "gpio.h"
+#include "gpiochip.h"
 #include "pr.h"
 #include "sleep.h"
 #include "version.h"
