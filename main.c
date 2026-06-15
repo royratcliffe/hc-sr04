@@ -173,6 +173,9 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /*
+   * Create a request configuration for the echo line.
+   */
   struct gpiod_request_config *echo_request_config = gpiod_request_config_new();
   if (!echo_request_config) {
     pr_err("Failed to create request config for echo pin\n");
@@ -186,6 +189,14 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /*
+   * Create a request configuration for the trig line. The trig line will be set
+   * to active initially, and then toggled between active and inactive states
+   * based on the edge events detected on the echo line. The trig line will be
+   * set to active for 10 ms, and then set to inactive for 60 ms, and this cycle
+   * will repeat indefinitely. The edge events on the echo line will be used to
+   * measure the pulse width of the signal received from the ultrasonic sensor.
+   */
   struct gpiod_request_config *trig_request_config = gpiod_request_config_new();
   if (!trig_request_config) {
     pr_err("Failed to create request config for trig pin\n");
@@ -199,6 +210,30 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /*
+   * Initially set the trig line to active and wait for edge events on the echo
+   * line with a timeout of 10 ms. If no edge events are detected within the
+   * timeout, set the trig line to inactive and wait for edge events on the echo
+   * line with a timeout of 60 ms. The HC-SR04 emits eight pulses of 40 kHz
+   * sound waves on the trig line's falling edge.
+   *
+   * If no edge events are detected within the timeout, set the trig line to
+   * active again and wait for edge events on the echo line with a timeout of 10
+   * ms. If an edge event is detected on the echo line, record the timestamp of
+   * the event and determine whether it is a rising or falling edge. If it is a
+   * rising edge, record the timestamp and wait for a falling edge. If it is a
+   * falling edge, calculate the pulse width by subtracting the timestamp of the
+   * rising edge from the timestamp of the falling edge and print the pulse
+   * width in nanoseconds to stdout. If the pulse width is greater than 0, print
+   * the pulse width in nanoseconds to stdout. If the pulse width is 0, print a
+   * warning message to stderr.
+   *
+   * Repeat this process indefinitely, alternating between active and inactive
+   * states for the trig line and waiting for edge events on the echo line with
+   * the corresponding timeouts. When an edge event is detected on the echo
+   * line, record the timestamp of the event and determine whether it is a
+   * rising or falling edge.
+   */
   enum gpiod_line_value trig_value = GPIOD_LINE_VALUE_ACTIVE;
   int64_t timeout_ns = MS_TO_NS(10);
   if (gpiod_line_request_set_value(trig_line_request, trig_line, trig_value) < 0) {
