@@ -13,7 +13,7 @@ static void free_entries(struct dirent **entries, ssize_t num_entries);
 
 ssize_t scan_dev_for_gpiochips(char ***paths) {
   struct dirent **entries;
-  int num_entries = scandir(dev, &entries, gpiochip_device_filter, NULL);
+  ssize_t num_entries = scandir(dev, &entries, gpiochip_device_filter, NULL);
   if (num_entries < 0) {
     return num_entries;
   }
@@ -22,8 +22,8 @@ ssize_t scan_dev_for_gpiochips(char ***paths) {
     free_entries(entries, num_entries);
     return -1;
   }
-  int num_found = 0;
-  for (int i = 0; i < num_entries; i++) {
+  ssize_t num_found = 0;
+  for (ssize_t i = 0; i < num_entries; i++) {
     char *path;
     if (dev_entry_path(entries[i], &path) < 0) {
       free_paths(found, num_found);
