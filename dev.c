@@ -15,7 +15,7 @@ ssize_t scan_dev_for_gpiochips(char ***paths) {
   struct dirent **entries;
   int num_entries = scandir(dev, &entries, gpiochip_device_filter, NULL);
   if (num_entries < 0) {
-    return -1;
+    return num_entries;
   }
   char **found = malloc(num_entries * sizeof(char *));
   if (!found) {
