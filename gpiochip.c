@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file gpiochip.c
+ * \brief Implementation of GPIO chip functions.
+ */
 #include "gpiochip.h"
 #include "dirent_ext.h"
 

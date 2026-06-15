@@ -1,3 +1,15 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file gpiochip.h
+ * \brief Header file for GPIO chip functions.
+ */
+#ifndef GPIOCHIP_H
+#define GPIOCHIP_H
+
 #include <sys/types.h>
 
 /*!
@@ -14,3 +26,5 @@ ssize_t scan_dir_for_gpiochip_paths(const char *dir, char ***paths);
  * \param num_paths Number of paths in the array.
  */
 void free_gpiochip_paths(char **paths, ssize_t num_paths);
+
+#endif /* GPIOCHIP_H */
