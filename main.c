@@ -2,8 +2,10 @@
 #include "gpio.h"
 #include "gpiochip.h"
 #include "pr.h"
+#include "redis.h"
 #include "sleep.h"
 #include "version.h"
+#include "when.h"
 
 #include <getopt.h>
 #include <stdio.h>
@@ -44,14 +46,15 @@ int main(int argc, char *argv[]) {
                                            {"quietly", no_argument, NULL, 'q'},
                                            {"echo", required_argument, NULL, 'e'},
                                            {"trig", required_argument, NULL, 't'},
-                                           {"host", optional_argument, NULL, 'h'},
-                                           {"port", optional_argument, NULL, 'p'},
+                                           {"host", required_argument, NULL, 'h'},
+                                           {"port", required_argument, NULL, 'p'},
+                                           {"maxlen", required_argument, NULL, 'm'},
                                            {"help", no_argument, NULL, '?'},
                                            {
                                                NULL,
                                            }};
   int c, longind;
-  while ((c = getopt_long(argc, argv, "Vvqe:t:h:p:?", longopts, &longind)) >= 0) {
+  while ((c = getopt_long(argc, argv, "Vvqe:t:h:p:m:?", longopts, &longind)) >= 0) {
     switch (c) {
     case 0:
       break;
@@ -70,6 +73,15 @@ int main(int argc, char *argv[]) {
     case 't':
       trig_gpio = optarg;
       break;
+    case 'h':
+      OCCURS(opt_h, optarg);
+      break;
+    case 'p':
+      OCCURS(opt_p, optarg);
+      break;
+    case 'm':
+      OCCURS(opt_m, optarg);
+      break;
     case '?':
       (void)fprintf(stderr, "Usage: %s [OPTIONS]\n", argv[0]);
       (void)fprintf(stderr, "Options:\n");
@@ -80,6 +92,7 @@ int main(int argc, char *argv[]) {
       (void)fprintf(stderr, "  -t, --trig=GPIO        Use GPIO pin for trigger (required)\n");
       (void)fprintf(stderr, "  -h, --host=HOST        Connect to Redis server at HOST\n");
       (void)fprintf(stderr, "  -p, --port=PORT        Connect to Redis server at PORT\n");
+      (void)fprintf(stderr, "  -m, --maxlen=MAXLEN    Set maximum length of Redis stream\n");
       (void)fprintf(stderr, "  -?, --help             Show this help message and exit\n");
       return EXIT_SUCCESS;
     default:
@@ -240,6 +253,7 @@ int main(int argc, char *argv[]) {
     pr_err("Failed to set initial value for trig line\n");
     return EXIT_FAILURE;
   }
+  OCCURS(trig);
   uint64_t rising_edge_timestamp_ns = 0ULL;
   enum gpiod_edge_event_type last_edge_event_type = GPIOD_EDGE_EVENT_FALLING_EDGE;
   for (;;) {
@@ -302,9 +316,13 @@ int main(int argc, char *argv[]) {
         if (last_edge_event_type == GPIOD_EDGE_EVENT_RISING_EDGE) {
           uint64_t pulse_width_ns = timestamp_ns - rising_edge_timestamp_ns;
           if (pulse_width_ns > 0) {
-            (void)printf("%lu\n", pulse_width_ns);
+            if (redis_host()) {
+              OCCURS(echo, pulse_width_ns);
+            } else {
+              (void)printf("%lu\n", pulse_width_ns);
+            }
           } else {
-            pr_warn("Received falling edge event on echo line with non-positive pulse width\n");
+            pr_warn("Received falling edge event on echo line with zero pulse width\n");
           }
         }
         break;

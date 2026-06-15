@@ -11,8 +11,25 @@ configure_file(
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GPIOD REQUIRED libgpiod)
 
-add_executable(hc-sr04 main.c gpio.c gpiochip.c dirent_ext.c pr.c sleep.c call_at_exit.c call_at.c cons.c)
+add_executable(hc-sr04
+    main.c
+    gpio.c
+    gpiochip.c
+    dirent_ext.c
+    redis.c
+    xadd.c
+    pr.c
+    sleep.c
+    call_at_exit.c
+    call_at.c
+    cons.c
+)
 target_include_directories(hc-sr04 PRIVATE . "${CMAKE_CURRENT_BINARY_DIR}")
 
 target_include_directories(hc-sr04 PRIVATE ${GPIOD_INCLUDE_DIRS})
 target_link_libraries(hc-sr04 PRIVATE ${GPIOD_LIBRARIES})
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(HIREDIS hiredis REQUIRED)
+target_include_directories(hc-sr04 PRIVATE ${HIREDIS_INCLUDE_DIRS})
+target_link_libraries(hc-sr04 PRIVATE ${HIREDIS_LIBRARIES})
