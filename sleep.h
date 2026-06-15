@@ -15,9 +15,7 @@
  * total specified duration has elapsed. If an error occurs during the sleep,
  * the function returns -1 and sets `errno` to indicate the error.
  *
- * Common errors include `EINVAL` if the input duration is invalid (e.g.,
- * negative or too large), and `EINTR` if the sleep is interrupted by a signal.
- * The caller can check `errno` to determine the cause of the error and take
- * appropriate action.
+ * Common errors include `EINVAL` if the input duration is invalid, e.g.,
+ * negative or too large.
  */
 int sleep_ns(long ns);
