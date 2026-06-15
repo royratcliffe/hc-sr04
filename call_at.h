@@ -1,3 +1,14 @@
+/*
+ * SPDX-License-Identifier: MIT
+ */
+
+/*!
+ * \file call_at.h
+ * \brief Header file for scheduling and calling functions.
+ */
+#ifndef CALL_AT_H
+#define CALL_AT_H
+
 struct cons;
 
 /*!
@@ -13,3 +24,5 @@ void call_at(struct cons **ca, void (*func)(void *), void *arg1);
  * \param ca Pointer to a pointer to the cons list of scheduled functions.
  */
 void call_up(struct cons **ca);
+
+#endif /* CALL_AT_H */

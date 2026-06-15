@@ -1,3 +1,11 @@
+/*
+ * SPDX-License-Identifier: MIT
+ */
+
+/*!
+ * \file call_at.c
+ * \brief Implementation of scheduling and calling functions.
+ */
 #include "call_at.h"
 #include "cons.h"
 #include "containerof.h"
