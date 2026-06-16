@@ -11,6 +11,11 @@ configure_file(
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GPIOD REQUIRED libgpiod)
 
+# Find the hiredis library. Typically, install the libhiredis-dev package on your
+# system to get the necessary headers and library files.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(HIREDIS hiredis REQUIRED)
+
 add_executable(hc-sr04
     main.c
     gpio.c
@@ -29,7 +34,5 @@ target_include_directories(hc-sr04 PRIVATE . "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(hc-sr04 PRIVATE ${GPIOD_INCLUDE_DIRS})
 target_link_libraries(hc-sr04 PRIVATE ${GPIOD_LIBRARIES})
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(HIREDIS hiredis REQUIRED)
 target_include_directories(hc-sr04 PRIVATE ${HIREDIS_INCLUDE_DIRS})
 target_link_libraries(hc-sr04 PRIVATE ${HIREDIS_LIBRARIES})
