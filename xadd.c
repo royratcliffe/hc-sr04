@@ -29,8 +29,8 @@ static size_t maxlen = 100;
 CAUSES(opt_m, handle_opt_m, const char *optarg) {
   maxlen = (size_t)atoi(optarg);
   if (maxlen == 0) {
-    pr_warn("Invalid maxlen value %s, using default value %zu\n", optarg, maxlen);
     maxlen = 100;
+    pr_warn("Invalid maxlen value %s, using default value %zu\n", optarg, maxlen);
   }
 }
 
