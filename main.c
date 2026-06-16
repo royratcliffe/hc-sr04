@@ -303,8 +303,8 @@ int main(int argc, char *argv[]) {
         pr_err("Failed to set initial value for trig line\n");
         return EXIT_FAILURE;
       }
-      pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %lu ns\n",
-               trig_value == GPIOD_LINE_VALUE_ACTIVE ? "active" : "inactive", timeout_ns);
+      pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %lld ns\n",
+               trig_value == GPIOD_LINE_VALUE_ACTIVE ? "active" : "inactive", (long long)timeout_ns);
       continue;
     }
     struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(max_events);
@@ -327,7 +327,8 @@ int main(int argc, char *argv[]) {
       }
       enum gpiod_edge_event_type event_type = gpiod_edge_event_get_event_type(event);
       uint64_t timestamp_ns = gpiod_edge_event_get_timestamp_ns(event);
-      pr_debug("Received %s edge event on echo line at timestamp %lu ns\n", event_type == GPIOD_EDGE_EVENT_RISING_EDGE ? "rising" : "falling", timestamp_ns);
+      pr_debug("Received %s edge event on echo line at timestamp %llu ns\n", event_type == GPIOD_EDGE_EVENT_RISING_EDGE ? "rising" : "falling",
+               (unsigned long long)timestamp_ns);
       switch (event_type) {
       case GPIOD_EDGE_EVENT_RISING_EDGE:
         rising_edge_timestamp_ns = timestamp_ns;
@@ -339,7 +340,7 @@ int main(int argc, char *argv[]) {
             if (redis_host()) {
               OCCURS(echo, pulse_width_ns);
             } else {
-              (void)printf("%lu\n", pulse_width_ns);
+              (void)printf("%llu\n", (unsigned long long)pulse_width_ns);
             }
           } else {
             pr_warn("Received falling edge event on echo line with zero pulse width\n");
