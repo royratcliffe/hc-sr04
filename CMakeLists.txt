@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(hc-sr04)
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/version.h.in"
     "${CMAKE_CURRENT_BINARY_DIR}/version.h"
