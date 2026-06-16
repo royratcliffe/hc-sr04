@@ -109,6 +109,10 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /*
+   * Find the GPIO chips and lines for the echo and trig pins.
+   * The echo and trig pins must be on different lines of the same or different chips.
+   */
   struct gpiod_chip *echo_chip = NULL;
   int echo_line = -1;
   struct gpiod_chip *trig_chip = NULL;
