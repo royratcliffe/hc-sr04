@@ -142,6 +142,15 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /*
+   * Create line settings for the echo pin. The echo pin will be configured as
+   * an input with edge detection enabled for both rising and falling edges. The
+   * edge events on the echo pin will be used to measure the pulse width of the
+   * signal received from the ultrasonic sensor. The echo pin will be set to
+   * active on a rising edge and set to inactive on a falling edge. The pulse
+   * width will be calculated by subtracting the timestamp of the rising edge
+   * from the timestamp of the falling edge.
+   */
   struct gpiod_line_settings *echo_settings = gpiod_line_settings_new();
   if (!echo_settings) {
     pr_err("Failed to create line settings for echo pin\n");
@@ -157,6 +166,13 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /*
+   * Create line settings for the trig pin. The trig pin will be configured as
+   * an output. The trig pin will be toggled between active and inactive states
+   * based on the edge events detected on the echo line. The trig pin will be
+   * set to active for 10 ms, and then set to inactive for 60 ms, and this cycle
+   * will repeat indefinitely.
+   */
   struct gpiod_line_settings *trig_settings = gpiod_line_settings_new();
   if (!trig_settings) {
     pr_err("Failed to create line settings for trig pin\n");
