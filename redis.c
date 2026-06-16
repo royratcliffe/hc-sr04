@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file redis.c
+ * \brief Source file for Redis configuration functions.
+ */
 #include "redis.h"
 #include "when.h"
 

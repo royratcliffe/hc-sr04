@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file redis.h
+ * \brief Header file for Redis configuration functions.
+ */
 #ifndef REDIS_H_
 #define REDIS_H_
 
