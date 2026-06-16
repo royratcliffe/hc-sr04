@@ -58,12 +58,10 @@ ssize_t scan_dir_for_gpiochip_paths(const char *dir, char ***paths) {
   /*
    * Create an array of strings to store the paths of found GPIO chip devices.
    * The caller is responsible for freeing this array using free_gpiochip_paths.
-   * Note that the number of found GPIO chip devices may be less than the number
-   * of entries returned by scandir, because some entries may be filtered out by
-   * the gpiochip_device_filter function. The caller should use the returned
-   * number of found GPIO chip devices to determine how many paths are in the
-   * array. If an error occurs while creating the array of paths, the function
-   * will free any allocated memory and return -1.
+   * The caller should use the returned number of found GPIO chip devices to
+   * determine how many paths are in the array. If an error occurs while
+   * creating the array of paths, the function will free any allocated memory
+   * and return -1.
    */
   char **found = malloc((num_entries + 1) * sizeof(char *));
   if (!found) {
