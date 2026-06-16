@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <stddef.h>
+
 /*!
  * \brief Alternative container-of macro without statement expression.
  * \param ptr Pointer to member.
