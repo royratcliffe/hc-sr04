@@ -13,7 +13,7 @@
 #include <time.h>
 
 int sleep_ns(long ns) {
-  struct timespec duration = {.tv_sec = 0, .tv_nsec = ns};
+  struct timespec duration = {.tv_sec = ns / 1000000000, .tv_nsec = ns % 1000000000};
   for (struct timespec rem; nanosleep(&duration, &rem) < 0; duration = rem) {
     if (errno != EINTR) {
       return -1;
