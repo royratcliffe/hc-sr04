@@ -26,13 +26,13 @@
 
 static struct redisContext *context = NULL;
 
-static size_t maxlen = MAXLEN;
+static int maxlen = MAXLEN;
 
 CAUSES(opt_m, handle_opt_m, const char *optarg) {
-  maxlen = (size_t)atoi(optarg);
+  maxlen = atoi(optarg);
   if (maxlen == 0) {
     maxlen = MAXLEN;
-    pr_warn("Invalid maxlen value %s, using default value %zu\n", optarg, maxlen);
+    pr_warn("Invalid maxlen value %s, using default value %d\n", optarg, maxlen);
   }
 }
 
@@ -68,7 +68,7 @@ CAUSES(trig, handle_trig) {
  * to the Redis stream with the pulse width in nanoseconds.
  */
 CAUSES(echo, handle_echo, uint64_t pulse_width_ns) {
-  void *reply = redisCommand(context, "XADD %s MAXLEN ~ %u * pulse_width_ns %llu", redis_key(), maxlen, pulse_width_ns);
+  void *reply = redisCommand(context, "XADD %s MAXLEN ~ %d * pulse_width_ns %llu", redis_key(), maxlen, pulse_width_ns);
   if (reply == NULL) {
     pr_err("Failed to add entry to Redis stream\n");
     if (context->err) {
