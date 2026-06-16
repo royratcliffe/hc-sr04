@@ -10,6 +10,13 @@
 #ifndef SLEEP_H
 #define SLEEP_H
 
+/*!
+ * \brief Convert milliseconds to nanoseconds.
+ *
+ * \param ms The number of milliseconds.
+ *
+ * \return The equivalent number of nanoseconds.
+ */
 #define MS_TO_NS(ms) ((ms) * 1000000LL)
 
 /*!
