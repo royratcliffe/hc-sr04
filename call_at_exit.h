@@ -1,3 +1,6 @@
+#ifndef CALL_AT_EXIT_H
+#define CALL_AT_EXIT_H
+
 void call_at_exit(void (*func)(void *), void *arg1);
 
 /*!
@@ -13,3 +16,5 @@ void call_at_exit(void (*func)(void *), void *arg1);
  * without having to manage the list of pointers manually.
  */
 void free_at_exit(void *heap);
+
+#endif /* CALL_AT_EXIT_H */
