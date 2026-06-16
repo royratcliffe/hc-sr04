@@ -66,7 +66,8 @@ CAUSES(trig, handle_trig) {
  * to the Redis stream with the pulse width in nanoseconds.
  */
 CAUSES(echo, handle_echo, uint64_t pulse_width_ns) {
-  if (redisCommand(context, "XADD %s MAXLEN ~ %u * pulse_width_ns %llu", redis_key(), maxlen, pulse_width_ns) == NULL) {
+  void *reply = redisCommand(context, "XADD %s MAXLEN ~ %u * pulse_width_ns %llu", redis_key(), maxlen, pulse_width_ns);
+  if (reply == NULL) {
     pr_err("Failed to add entry to Redis stream\n");
     if (context->err) {
       pr_err("Redis error: %s\n", context->errstr);
@@ -74,4 +75,5 @@ CAUSES(echo, handle_echo, uint64_t pulse_width_ns) {
     redisFree(context);
     exit(EXIT_FAILURE);
   }
+  freeReplyObject(reply);
 }
