@@ -36,3 +36,6 @@ target_link_libraries(hc-sr04 PRIVATE ${GPIOD_LIBRARIES})
 
 target_include_directories(hc-sr04 PRIVATE ${HIREDIS_INCLUDE_DIRS})
 target_link_libraries(hc-sr04 PRIVATE ${HIREDIS_LIBRARIES})
+
+# Install the executable to /usr/local/bin
+install(TARGETS hc-sr04 DESTINATION bin)
