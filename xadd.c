@@ -22,14 +22,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAXLEN 100
+
 static struct redisContext *context = NULL;
 
-static size_t maxlen = 100;
+static size_t maxlen = MAXLEN;
 
 CAUSES(opt_m, handle_opt_m, const char *optarg) {
   maxlen = (size_t)atoi(optarg);
   if (maxlen == 0) {
-    maxlen = 100;
+    maxlen = MAXLEN;
     pr_warn("Invalid maxlen value %s, using default value %zu\n", optarg, maxlen);
   }
 }
