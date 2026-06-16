@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(hc-sr04)
 
+# Require the C compiler to support C11 standard. This ensures that the code is
+# compiled with the appropriate language features and standards. GCC version 15
+# narrows the default C standard to C17, which may cause compatibility issues
+# with code that relies on C11 features, such as the interpretation of empty
+# arguments. C11 allows for a more flexible handling of empty arguments.
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
