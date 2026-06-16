@@ -2,7 +2,7 @@ void call_at_exit(void (*func)(void *), void *arg1);
 
 /*!
  * \brief Registers a pointer to be freed at program exit.
- * \param car The pointer value to be freed at program exit.
+ * \param heap The pointer value to be freed at program exit.
  * \details This function creates a new cons cell on the heap to store the
  * pointer value in its \c car field. It then prepends this cons cell to a
  * global list of cons cells. The \c cdr field of the cons cell is used to link
