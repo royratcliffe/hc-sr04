@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
     pr_err("Failed to create line settings for echo pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(line_settings_free, echo_settings);
+  call_at_exit(gpio_line_settings_free, echo_settings);
   if (gpiod_line_settings_set_direction(echo_settings, GPIOD_LINE_DIRECTION_INPUT) < 0) {
     pr_err("Failed to set line direction for echo pin\n");
     return EXIT_FAILURE;
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
     pr_err("Failed to create line settings for trig pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(line_settings_free, trig_settings);
+  call_at_exit(gpio_line_settings_free, trig_settings);
   if (gpiod_line_settings_set_direction(trig_settings, GPIOD_LINE_DIRECTION_OUTPUT) < 0) {
     pr_err("Failed to set line direction for trig pin\n");
     return EXIT_FAILURE;
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]) {
     pr_err("Failed to create line config for echo pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(line_config_free, echo_config);
+  call_at_exit(gpio_line_config_free, echo_config);
   if (gpiod_line_config_add_line_settings(echo_config, (unsigned int[]){(unsigned int)echo_line}, 1, echo_settings) < 0) {
     pr_err("Failed to add line settings for echo pin\n");
     return EXIT_FAILURE;
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
     pr_err("Failed to create line config for trig pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(line_config_free, trig_config);
+  call_at_exit(gpio_line_config_free, trig_config);
   if (gpiod_line_config_add_line_settings(trig_config, (unsigned int[]){(unsigned int)trig_line}, 1, trig_settings) < 0) {
     pr_err("Failed to add line settings for trig pin\n");
     return EXIT_FAILURE;
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
     pr_err("Failed to create request config for echo pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(request_config_free, echo_request_config);
+  call_at_exit(gpio_request_config_free, echo_request_config);
   gpiod_request_config_set_consumer(echo_request_config, "hc-sr04");
   struct gpiod_line_request *line_request = gpiod_chip_request_lines(echo_chip, echo_request_config, echo_config);
   if (!line_request) {
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
     pr_err("Failed to create request config for trig pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(request_config_free, trig_request_config);
+  call_at_exit(gpio_request_config_free, trig_request_config);
   gpiod_request_config_set_consumer(trig_request_config, "hc-sr04");
   struct gpiod_line_request *trig_line_request = gpiod_chip_request_lines(trig_chip, trig_request_config, trig_config);
   if (!trig_line_request) {
@@ -303,8 +303,7 @@ int main(int argc, char *argv[]) {
         pr_err("Failed to set initial value for trig line\n");
         return EXIT_FAILURE;
       }
-      pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %lld ns\n",
-               trig_value == GPIOD_LINE_VALUE_ACTIVE ? "active" : "inactive", (long long)timeout_ns);
+      pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %ld ns\n", gpio_line_value_to_string(trig_value), (long)timeout_ns);
       continue;
     }
     struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(max_events);
@@ -327,8 +326,7 @@ int main(int argc, char *argv[]) {
       }
       enum gpiod_edge_event_type event_type = gpiod_edge_event_get_event_type(event);
       uint64_t timestamp_ns = gpiod_edge_event_get_timestamp_ns(event);
-      pr_debug("Received %s edge event on echo line at timestamp %llu ns\n", event_type == GPIOD_EDGE_EVENT_RISING_EDGE ? "rising" : "falling",
-               (unsigned long long)timestamp_ns);
+      pr_debug("Received %s edge event on echo line at timestamp %lu ns\n", gpio_edge_event_type_to_string(event_type), (unsigned long)timestamp_ns);
       switch (event_type) {
       case GPIOD_EDGE_EVENT_RISING_EDGE:
         rising_edge_timestamp_ns = timestamp_ns;
