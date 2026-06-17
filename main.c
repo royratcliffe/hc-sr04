@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
     pr_err("Failed to set edge detection for echo pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit((void (*)(void *))gpiod_line_settings_free, echo.line_settings);
+  call_at_exit(gpio_line_settings_free, echo.line_settings);
 
   /*
    * Create line settings for the trig pin. The trig pin will be configured as
