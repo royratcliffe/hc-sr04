@@ -38,6 +38,10 @@ static void gpio_request_config_free(void *request_config); /*!< Free a request 
 static void gpio_line_request_release(void *line_request);  /*!< Release a line request object */
 static void gpio_edge_event_buffer_free(void *buffer);      /*!< Free an edge event buffer object */
 
+static char **paths;
+static ssize_t num_paths;
+static struct gpiod_chip **chips;
+
 /*
  * Retain the GPIO line information in static variables so that they can be
  * freed at exit using the call_at_exit mechanism. This allows for proper
@@ -53,13 +57,12 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, handle_sig);
   signal(SIGTERM, handle_sig);
 
-  char **paths;
-  ssize_t num_paths = scan_dir_for_gpiochip_paths("/dev", &paths);
+  num_paths = scan_dir_for_gpiochip_paths("/dev", &paths);
   if (num_paths < 0) {
     pr_err("Failed to scan /dev for GPIO chip devices\n");
     return EXIT_FAILURE;
   }
-  struct gpiod_chip **chips = malloc(num_paths * sizeof(struct gpiod_chip *));
+  chips = malloc(num_paths * sizeof(struct gpiod_chip *));
   if (!chips) {
     pr_err("Failed to allocate memory for chip pointers\n");
     free_gpiochip_paths(paths, num_paths);
@@ -372,14 +375,19 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  return EXIT_SUCCESS;
+}
+
+static void handle_sig(int signum) {
+  pr_info("Received signal %d, exiting...\n", signum);
   /*
-   * Never arrives here, but if it did, it would clean up resources before
-   * exiting. The cleanup includes closing the GPIO chip devices, freeing the
-   * memory allocated for the chip pointers, and freeing the list of GPIO chip
-   * paths. This ensures that all resources are properly released and there are
-   * no memory leaks when the program exits. The cleanup code is important for
-   * maintaining good resource management practices and preventing potential
-   * issues with dangling pointers or open file descriptors.
+   * Clean up resources before exiting. The cleanup includes closing the GPIO
+   * chip devices, freeing the memory allocated for the chip pointers, and
+   * freeing the list of GPIO chip paths. This ensures that all resources are
+   * properly released and there are no memory leaks when the program exits. The
+   * cleanup code is important for maintaining good resource management
+   * practices and preventing potential issues with dangling pointers or open
+   * file descriptors.
    */
   for (ssize_t i = 0; i < num_paths; i++) {
     if (chips[i]) {
@@ -388,11 +396,6 @@ int main(int argc, char *argv[]) {
   }
   free(chips);
   free_gpiochip_paths(paths, num_paths);
-  return EXIT_SUCCESS;
-}
-
-static void handle_sig(int signum) {
-  pr_info("Received signal %d, exiting...\n", signum);
   exit(EXIT_SUCCESS);
 }
 
