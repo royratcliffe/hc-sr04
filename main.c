@@ -355,8 +355,8 @@ int main(int argc, char *argv[]) {
         break;
       case GPIOD_EDGE_EVENT_FALLING_EDGE:
         if (last_edge_event_type == GPIOD_EDGE_EVENT_RISING_EDGE) {
-          uint64_t pulse_width_ns = timestamp_ns - rising_edge_timestamp_ns;
-          if (pulse_width_ns > 0) {
+          if (timestamp_ns > rising_edge_timestamp_ns) {
+            uint64_t pulse_width_ns = timestamp_ns - rising_edge_timestamp_ns;
             if (redis_host()) {
               OCCURS(echo, pulse_width_ns);
             } else {
