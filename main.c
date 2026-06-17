@@ -28,6 +28,11 @@
  */
 #define MAX_EVENTS 10
 
+static void gpio_line_settings_free(void *line_settings);   /*!< Free a line settings object */
+static void gpio_line_config_free(void *line_config);       /*!< Free a line config object */
+static void gpio_request_config_free(void *request_config); /*!< Free a request config object */
+static void gpio_edge_event_buffer_free(void *buffer);      /*!< Free an edge event buffer object */
+
 int main(int argc, char *argv[]) {
   char **paths;
   ssize_t num_paths = scan_dir_for_gpiochip_paths("/dev", &paths);
@@ -384,4 +389,24 @@ int main(int argc, char *argv[]) {
   free(chips);
   free_gpiochip_paths(paths, num_paths);
   return EXIT_SUCCESS;
+}
+
+static void gpio_line_settings_free(void *line_settings) {
+  pr_debug("Freeing line settings object at address %p\n", line_settings);
+  gpiod_line_settings_free(line_settings);
+}
+
+static void gpio_line_config_free(void *line_config) {
+  pr_debug("Freeing line config object at address %p\n", line_config);
+  gpiod_line_config_free(line_config);
+}
+
+static void gpio_request_config_free(void *request_config) {
+  pr_debug("Freeing request config object at address %p\n", request_config);
+  gpiod_request_config_free(request_config);
+}
+
+static void gpio_edge_event_buffer_free(void *buffer) {
+  pr_debug("Freeing edge event buffer object at address %p\n", buffer);
+  gpiod_edge_event_buffer_free(buffer);
 }

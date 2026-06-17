@@ -125,9 +125,4 @@ const char *gpio_line_value_to_string(enum gpiod_line_value value);
  */
 const char *gpio_edge_event_type_to_string(enum gpiod_edge_event_type event_type);
 
-void gpio_line_settings_free(void *line_settings);   /*!< Free a line settings object */
-void gpio_line_config_free(void *line_config);       /*!< Free a line config object */
-void gpio_request_config_free(void *request_config); /*!< Free a request config object */
-void gpio_edge_event_buffer_free(void *buffer);      /*!< Free an edge event buffer object */
-
 #endif /* GPIO_H */

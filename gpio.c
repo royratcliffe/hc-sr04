@@ -9,7 +9,6 @@
  * \brief Implementation of GPIO line functions.
  */
 #include "gpio.h"
-#include "pr.h"
 
 void gpio_edge_event_generator_init(struct gpio_edge_event_generator *generator /* generator to initialise */,
                                     struct gpiod_line_request *request /* request to read edge events from */,
@@ -93,24 +92,4 @@ const char *gpio_edge_event_type_to_string(enum gpiod_edge_event_type event_type
   default:
     return "unknown";
   }
-}
-
-void gpio_line_settings_free(void *line_settings) {
-  pr_debug("Freeing line settings object at address %p\n", line_settings);
-  gpiod_line_settings_free(line_settings);
-}
-
-void gpio_line_config_free(void *line_config) {
-  pr_debug("Freeing line config object at address %p\n", line_config);
-  gpiod_line_config_free(line_config);
-}
-
-void gpio_request_config_free(void *request_config) {
-  pr_debug("Freeing request config object at address %p\n", request_config);
-  gpiod_request_config_free(request_config);
-}
-
-void gpio_edge_event_buffer_free(void *buffer) {
-  pr_debug("Freeing edge event buffer object at address %p\n", buffer);
-  gpiod_edge_event_buffer_free(buffer);
 }
