@@ -76,7 +76,6 @@ CAUSES(echo, handle_echo, uint64_t pulse_width_ns) {
     if (context->err) {
       pr_err("Redis error: %s\n", context->errstr);
     }
-    redisFree(context);
     exit(EXIT_FAILURE);
   }
   freeReplyObject(reply);
