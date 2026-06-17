@@ -25,17 +25,17 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(HIREDIS hiredis REQUIRED)
 
 add_executable(hc-sr04
-    main.c
-    gpio.c
-    gpiochip.c
-    dirent_ext.c
-    redis.c
-    xadd.c
-    pr.c
-    sleep.c
-    call_at_exit.c
-    call_at.c
-    cons.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/gpio.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/gpiochip.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/dirent_ext.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/redis.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/xadd.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/pr.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/sleep.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/call_at_exit.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/call_at.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/cons.c
 )
 target_include_directories(hc-sr04 PRIVATE . "${CMAKE_CURRENT_BINARY_DIR}")
 
