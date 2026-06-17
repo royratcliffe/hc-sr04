@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file main.c
+ * \brief Main source file for the hc-sr04 program.
+ */
 #include "call_at_exit.h"
 #include "gpio.h"
 #include "gpio_line.h"
