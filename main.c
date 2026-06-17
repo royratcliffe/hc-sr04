@@ -327,6 +327,10 @@ int main(int argc, char *argv[]) {
   while (sig == 0) {
     int max_events;
     if ((max_events = gpiod_line_request_wait_edge_events(echo.line_request, timeout_ns)) < 0) {
+      if (errno == EINTR) {
+        pr_debug("Wait for edge events on echo line interrupted by signal\n");
+        continue;
+      }
       pr_err("Failed to wait for edge events on echo line\n");
       return EXIT_FAILURE;
     }
