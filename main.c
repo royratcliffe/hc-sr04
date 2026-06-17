@@ -12,6 +12,22 @@
 #include <stdlib.h>
 #include <time.h>
 
+/*!
+ * \brief Maximum number of edge events to read from the echo line at a time.
+ * \details This constant defines the maximum number of edge events that can be
+ * read from the echo line in a single call to
+ * gpiod_line_request_read_edge_events. The edge events are stored in a buffer,
+ * and this constant determines the size of that buffer. The value of 10 is
+ * chosen as a reasonable limit to ensure that the program can handle bursts of
+ * edge events without consuming excessive memory. If more than 10 edge events
+ * occur on the echo line before the program can read them, the additional
+ * events will be lost. However, in typical use cases with the HC-SR04
+ * ultrasonic sensor, it is unlikely that more than 10 edge events will occur in
+ * such a short time frame, so this limit should be sufficient for most
+ * applications.
+ */
+#define MAX_EVENTS 10
+
 int main(int argc, char *argv[]) {
   char **paths;
   ssize_t num_paths = scan_dir_for_gpiochip_paths("/dev", &paths);
@@ -276,6 +292,12 @@ int main(int argc, char *argv[]) {
   OCCURS(trig);
   uint64_t rising_edge_timestamp_ns = 0ULL;
   enum gpiod_edge_event_type last_edge_event_type = GPIOD_EDGE_EVENT_FALLING_EDGE;
+  struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(MAX_EVENTS);
+  if (!buffer) {
+    pr_err("Failed to create edge event buffer for echo line\n");
+    return EXIT_FAILURE;
+  }
+  call_at_exit(gpio_edge_event_buffer_free, buffer);
   for (;;) {
     int max_events;
     if ((max_events = gpiod_line_request_wait_edge_events(line_request, timeout_ns)) < 0) {
@@ -306,22 +328,15 @@ int main(int argc, char *argv[]) {
       pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %ld ns\n", gpio_line_value_to_string(trig_value), (long)timeout_ns);
       continue;
     }
-    struct gpiod_edge_event_buffer *buffer = gpiod_edge_event_buffer_new(max_events);
-    if (!buffer) {
-      pr_err("Failed to create edge event buffer for echo line\n");
-      return EXIT_FAILURE;
-    }
-    ssize_t num_events = gpiod_line_request_read_edge_events(line_request, buffer, max_events);
+    ssize_t num_events = gpiod_line_request_read_edge_events(line_request, buffer, gpiod_edge_event_buffer_get_capacity(buffer));
     if (num_events < 0) {
       pr_err("Failed to read edge events for echo line\n");
-      gpiod_edge_event_buffer_free(buffer);
       return EXIT_FAILURE;
     }
     for (ssize_t i = 0; i < num_events; i++) {
       struct gpiod_edge_event *event = gpiod_edge_event_buffer_get_event(buffer, i);
       if (!event) {
         pr_err("Failed to get edge event from buffer for echo line\n");
-        gpiod_edge_event_buffer_free(buffer);
         return EXIT_FAILURE;
       }
       enum gpiod_edge_event_type event_type = gpiod_edge_event_get_event_type(event);
@@ -351,9 +366,17 @@ int main(int argc, char *argv[]) {
       }
       last_edge_event_type = event_type;
     }
-    gpiod_edge_event_buffer_free(buffer);
   }
 
+  /*
+   * Never arrives here, but if it did, it would clean up resources before
+   * exiting. The cleanup includes closing the GPIO chip devices, freeing the
+   * memory allocated for the chip pointers, and freeing the list of GPIO chip
+   * paths. This ensures that all resources are properly released and there are
+   * no memory leaks when the program exits. The cleanup code is important for
+   * maintaining good resource management practices and preventing potential
+   * issues with dangling pointers or open file descriptors.
+   */
   for (ssize_t i = 0; i < num_paths; i++) {
     gpiod_chip_close(chips[i]);
   }
