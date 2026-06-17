@@ -1,6 +1,32 @@
 #include "gpio.h"
 #include "pr.h"
 
+int gpio_line_request_read_edge_events(struct gpiod_line_request *request, struct gpiod_edge_event_buffer *buffer, size_t max_events,
+                                       int (*yield)(struct gpiod_edge_event *event, void *user_data), void *user_data) {
+  int rc = 0;
+  const size_t capacity = gpiod_edge_event_buffer_get_capacity(buffer);
+  while (max_events > 0) {
+    int num_events = gpiod_line_request_read_edge_events(request, buffer, capacity);
+    if (num_events < 0) {
+      return num_events;
+    }
+    if (num_events == 0) {
+      break;
+    }
+    for (unsigned long i = 0; i < (unsigned long)num_events; i++) {
+      struct gpiod_edge_event *event = gpiod_edge_event_buffer_get_event(buffer, i);
+      if (!event) {
+        return -1;
+      }
+      if (yield) {
+        rc += yield(event, user_data);
+      }
+    }
+    max_events -= num_events;
+  }
+  return rc;
+}
+
 const char *gpio_line_value_to_string(enum gpiod_line_value value) {
   switch (value) {
   case GPIOD_LINE_VALUE_ERROR:
