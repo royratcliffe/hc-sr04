@@ -72,15 +72,6 @@ struct gpiod_line_request *gpio_line_request(struct gpio_line *line) {
     if (!line->chip || !line->request_config || !line->line_config) {
       return NULL;
     }
-    /*
-     * If a line request already exists, release it before creating a new one to
-     * prevent resource leaks. This ensures that any existing line request is
-     * properly cleaned up before a new one is created, avoiding potential
-     * issues with dangling pointers or open file descriptors.
-     */
-    if (line->line_request) {
-      gpiod_line_request_release(line->line_request);
-    }
     line->line_request = gpiod_chip_request_lines(line->chip, line->request_config, line->line_config);
   }
   return line->line_request;
