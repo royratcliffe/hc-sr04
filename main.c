@@ -328,16 +328,17 @@ int main(int argc, char *argv[]) {
       pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %ld ns\n", gpio_line_value_to_string(trig_value), (long)timeout_ns);
       continue;
     }
-    ssize_t num_events = gpiod_line_request_read_edge_events(line_request, buffer, gpiod_edge_event_buffer_get_capacity(buffer));
-    if (num_events < 0) {
-      pr_err("Failed to read edge events for echo line\n");
-      return EXIT_FAILURE;
-    }
-    for (ssize_t i = 0; i < num_events; i++) {
-      struct gpiod_edge_event *event = gpiod_edge_event_buffer_get_event(buffer, i);
-      if (!event) {
-        pr_err("Failed to get edge event from buffer for echo line\n");
+    struct gpio_edge_event_generator generator;
+    gpio_edge_event_generator_init(&generator, line_request, buffer, (size_t)max_events);
+    for (;;) {
+      struct gpiod_edge_event *event = NULL;
+      int num_events = gpio_edge_event_generator_next(&generator, &event);
+      if (num_events < 0) {
+        pr_err("Failed to read edge events for echo line\n");
         return EXIT_FAILURE;
+      }
+      if (num_events == 0) {
+        break;
       }
       enum gpiod_edge_event_type event_type = gpiod_edge_event_get_event_type(event);
       uint64_t timestamp_ns = gpiod_edge_event_get_timestamp_ns(event);
