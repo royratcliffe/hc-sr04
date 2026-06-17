@@ -289,9 +289,8 @@ int main(int argc, char *argv[]) {
    * line, record the timestamp of the event and determine whether it is a
    * rising or falling edge.
    */
-  enum gpiod_line_value trig_value = GPIOD_LINE_VALUE_ACTIVE;
   int64_t timeout_ns = MS_TO_NS(10);
-  if (gpio_line_set_value(&trig, trig_value) < 0) {
+  if (gpio_line_set_value(&trig, GPIOD_LINE_VALUE_ACTIVE) < 0) {
     pr_err("Failed to set initial value for trig line\n");
     return EXIT_FAILURE;
   }
@@ -312,26 +311,27 @@ int main(int argc, char *argv[]) {
     }
     if (max_events == 0) {
       pr_debug("Wait for edge events on echo line timed out\n");
-      switch (trig_value) {
+      enum gpiod_line_value value;
+      switch (gpio_line_get_value(&trig)) {
       case GPIOD_LINE_VALUE_ACTIVE:
-        trig_value = GPIOD_LINE_VALUE_INACTIVE;
+        value = GPIOD_LINE_VALUE_INACTIVE;
         timeout_ns = MS_TO_NS(60);
         break;
       case GPIOD_LINE_VALUE_INACTIVE:
-        trig_value = GPIOD_LINE_VALUE_ACTIVE;
+        value = GPIOD_LINE_VALUE_ACTIVE;
         timeout_ns = MS_TO_NS(10);
         break;
       default:
-        pr_warn("Unknown trig line value %d\n", trig_value);
-        trig_value = GPIOD_LINE_VALUE_ACTIVE;
+        pr_warn("Unknown trig line value %d\n", gpio_line_get_value(&trig));
+        value = GPIOD_LINE_VALUE_ACTIVE;
         timeout_ns = MS_TO_NS(10);
         break;
       }
-      if (gpio_line_set_value(&trig, trig_value) < 0) {
+      if (gpio_line_set_value(&trig, value) < 0) {
         pr_err("Failed to set initial value for trig line\n");
         return EXIT_FAILURE;
       }
-      pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %ld ns\n", gpio_line_value_to_string(trig_value), (long)timeout_ns);
+      pr_debug("Set trig line to %s and waiting for edge events on echo line with timeout %ld ns\n", gpio_line_value_to_string(value), (long)timeout_ns);
       continue;
     }
     struct gpio_edge_event_generator generator;
