@@ -41,25 +41,20 @@ int gpio_edge_event_generator_next(struct gpio_edge_event_generator *generator, 
 int gpio_line_request_read_edge_events(struct gpiod_line_request *request, struct gpiod_edge_event_buffer *buffer, size_t max_events,
                                        int (*yield)(struct gpiod_edge_event *event, void *user_data), void *user_data) {
   int rc = 0;
-  const size_t capacity = gpiod_edge_event_buffer_get_capacity(buffer);
-  while (max_events > 0) {
-    int num_events = gpiod_line_request_read_edge_events(request, buffer, capacity);
+  struct gpio_edge_event_generator generator;
+  gpio_edge_event_generator_init(&generator, request, buffer, max_events);
+  for (;;) {
+    struct gpiod_edge_event *event = NULL;
+    int num_events = gpio_edge_event_generator_next(&generator, &event);
     if (num_events < 0) {
       return num_events;
     }
     if (num_events == 0) {
       break;
     }
-    for (unsigned long i = 0; i < (unsigned long)num_events; i++) {
-      struct gpiod_edge_event *event = gpiod_edge_event_buffer_get_event(buffer, i);
-      if (!event) {
-        return -1;
-      }
-      if (yield) {
-        rc += yield(event, user_data);
-      }
+    if (yield) {
+      rc += yield(event, user_data);
     }
-    max_events -= num_events;
   }
   return rc;
 }
