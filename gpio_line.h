@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file gpio_line.h
+ * \brief Header file for GPIO line functions.
+ */
 #ifndef GPIO_LINE_H
 #define GPIO_LINE_H
 

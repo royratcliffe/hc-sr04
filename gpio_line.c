@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file gpio_line.c
+ * \brief Implementation of GPIO line functions.
+ */
 #include "gpio_line.h"
 
 int gpio_line_add_offset_from_name(struct gpio_line *line, struct gpiod_chip **chips, size_t num_chips) {
