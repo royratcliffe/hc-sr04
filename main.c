@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <signal.h>
 
 /*!
  * \brief Maximum number of edge events to read from the echo line at a time.
@@ -28,12 +29,17 @@
  */
 #define MAX_EVENTS 10
 
+static void handle_sig(int signum);
+
 static void gpio_line_settings_free(void *line_settings);   /*!< Free a line settings object */
 static void gpio_line_config_free(void *line_config);       /*!< Free a line config object */
 static void gpio_request_config_free(void *request_config); /*!< Free a request config object */
 static void gpio_edge_event_buffer_free(void *buffer);      /*!< Free an edge event buffer object */
 
 int main(int argc, char *argv[]) {
+  signal(SIGINT, handle_sig);
+  signal(SIGTERM, handle_sig);
+
   char **paths;
   ssize_t num_paths = scan_dir_for_gpiochip_paths("/dev", &paths);
   if (num_paths < 0) {
@@ -389,6 +395,11 @@ int main(int argc, char *argv[]) {
   free(chips);
   free_gpiochip_paths(paths, num_paths);
   return EXIT_SUCCESS;
+}
+
+static void handle_sig(int signum) {
+  pr_info("Received signal %d, exiting...\n", signum);
+  exit(EXIT_SUCCESS);
 }
 
 static void gpio_line_settings_free(void *line_settings) {
