@@ -237,8 +237,8 @@ int main(int argc, char *argv[]) {
   }
   call_at_exit(gpio_request_config_free, echo_request_config);
   gpiod_request_config_set_consumer(echo_request_config, "hc-sr04");
-  struct gpiod_line_request *line_request = gpiod_chip_request_lines(echo_chip, echo_request_config, echo_config);
-  if (!line_request) {
+  struct gpiod_line_request *echo_line_request = gpiod_chip_request_lines(echo_chip, echo_request_config, echo_config);
+  if (!echo_line_request) {
     pr_err("Failed to request echo line\n");
     return EXIT_FAILURE;
   }
@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
   call_at_exit(gpio_edge_event_buffer_free, buffer);
   for (;;) {
     int max_events;
-    if ((max_events = gpiod_line_request_wait_edge_events(line_request, timeout_ns)) < 0) {
+    if ((max_events = gpiod_line_request_wait_edge_events(echo_line_request, timeout_ns)) < 0) {
       pr_err("Failed to wait for edge events on echo line\n");
       return EXIT_FAILURE;
     }
@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
     struct gpio_edge_event_generator generator;
-    gpio_edge_event_generator_init(&generator, line_request, buffer, (size_t)max_events);
+    gpio_edge_event_generator_init(&generator, echo_line_request, buffer, (size_t)max_events);
     for (;;) {
       struct gpiod_edge_event *event = NULL;
       int num_events = gpio_edge_event_generator_next(&generator, &event);
