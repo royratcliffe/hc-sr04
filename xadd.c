@@ -16,6 +16,7 @@
 #include "pr.h"
 #include "redis.h"
 #include "when.h"
+#include "call_at_exit.h"
 
 #include <hiredis.h>
 
@@ -56,6 +57,7 @@ CAUSES(trig, handle_trig) {
     }
     exit(EXIT_FAILURE);
   }
+  call_at_exit((void (*)(void *))redisFree, context);
 }
 
 /*!
