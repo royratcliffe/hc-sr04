@@ -353,7 +353,7 @@ int main(int argc, char *argv[]) {
             if (redis_host()) {
               OCCURS(echo, pulse_width_ns);
             } else {
-              (void)printf("%llu\n", (unsigned long long)pulse_width_ns);
+              (void)printf("%lu\n", (unsigned long)pulse_width_ns);
             }
           } else {
             pr_warn("Received falling edge event on echo line with zero pulse width\n");
