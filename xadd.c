@@ -30,7 +30,7 @@ static int maxlen = MAXLEN;
 
 CAUSES(opt_m, handle_opt_m, const char *optarg) {
   maxlen = atoi(optarg);
-  if (maxlen == 0) {
+  if (maxlen <= 0) {
     maxlen = MAXLEN;
     pr_warn("Invalid maxlen value %s, using default value %d\n", optarg, maxlen);
   }
