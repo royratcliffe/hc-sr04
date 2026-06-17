@@ -8,10 +8,10 @@
 #include "when.h"
 
 #include <getopt.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <signal.h>
 
 /*!
  * \brief Maximum number of edge events to read from the echo line at a time.
