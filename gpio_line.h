@@ -66,4 +66,11 @@ int gpio_line_set_consumer(struct gpio_line *line, const char *consumer);
  */
 int gpio_line_set_value(struct gpio_line *line, enum gpiod_line_value value);
 
+/*!
+ * \brief Get the value of a GPIO line.
+ * \param line Pointer to a gpio_line structure representing the GPIO line to read from.
+ * \return The value of the GPIO line (active, inactive, or error).
+ */
+enum gpiod_line_value gpio_line_get_value(struct gpio_line *line);
+
 #endif /* GPIO_LINE_H */

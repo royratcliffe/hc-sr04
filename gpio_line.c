@@ -109,3 +109,11 @@ int gpio_line_set_value(struct gpio_line *line, enum gpiod_line_value value) {
   }
   return gpiod_line_request_set_value(line_request, line->offset, value);
 }
+
+enum gpiod_line_value gpio_line_get_value(struct gpio_line *line) {
+  struct gpiod_line_request *line_request = gpio_line_request(line);
+  if (!line_request) {
+    return GPIOD_LINE_VALUE_ERROR;
+  }
+  return gpiod_line_request_get_value(line_request, line->offset);
+}
