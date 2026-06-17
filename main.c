@@ -1,5 +1,6 @@
 #include "call_at_exit.h"
 #include "gpio.h"
+#include "gpio_line.h"
 #include "gpiochip.h"
 #include "pr.h"
 #include "redis.h"
@@ -34,7 +35,19 @@ static void handle_sig(int signum);
 static void gpio_line_settings_free(void *line_settings);   /*!< Free a line settings object */
 static void gpio_line_config_free(void *line_config);       /*!< Free a line config object */
 static void gpio_request_config_free(void *request_config); /*!< Free a request config object */
+static void gpio_line_request_release(void *line_request);  /*!< Release a line request object */
 static void gpio_edge_event_buffer_free(void *buffer);      /*!< Free an edge event buffer object */
+
+/*
+ * Retain the GPIO line information in static variables so that they can be
+ * freed at exit using the call_at_exit mechanism. This allows for proper
+ * cleanup of resources when the program exits, ensuring that any allocated
+ * memory or opened GPIO lines are released appropriately. The free_gpio_line
+ * function will be registered to be called at exit for both the echo and trig
+ * lines, allowing for a clean shutdown of the program and preventing resource
+ * leaks.
+ */
+static struct gpio_line echo, trig;
 
 int main(int argc, char *argv[]) {
   signal(SIGINT, handle_sig);
@@ -66,8 +79,6 @@ int main(int argc, char *argv[]) {
     chips[i] = chip;
   }
 
-  const char *echo_gpio = NULL;
-  const char *trig_gpio = NULL;
   static const struct option longopts[] = {{"version", no_argument, NULL, 'V'},
                                            {"verbose", no_argument, NULL, 'v'},
                                            {"quietly", no_argument, NULL, 'q'},
@@ -95,10 +106,10 @@ int main(int argc, char *argv[]) {
       pr_verbosity_dec();
       break;
     case 'e':
-      echo_gpio = optarg;
+      echo.name = optarg;
       break;
     case 't':
-      trig_gpio = optarg;
+      trig.name = optarg;
       break;
     case 'h':
       OCCURS(opt_h, optarg);
@@ -131,7 +142,7 @@ int main(int argc, char *argv[]) {
     (void)fprintf(stderr, "Unexpected non-option argument: %s\n", argv[optind]);
     return EXIT_FAILURE;
   }
-  if (!echo_gpio || !trig_gpio) {
+  if (!echo.name || !trig.name) {
     pr_err("Both echo and trig GPIO pins must be specified\n");
     return EXIT_FAILURE;
   }
@@ -140,31 +151,15 @@ int main(int argc, char *argv[]) {
    * Find the GPIO chips and lines for the echo and trig pins.
    * The echo and trig pins must be on different lines of the same or different chips.
    */
-  struct gpiod_chip *echo_chip = NULL;
-  int echo_line = -1;
-  struct gpiod_chip *trig_chip = NULL;
-  int trig_line = -1;
-  for (ssize_t i = 0; i < num_paths; i++) {
-    int line_offset = gpiod_chip_get_line_offset_from_name(chips[i], echo_gpio);
-    if (line_offset >= 0) {
-      echo_chip = chips[i];
-      echo_line = line_offset;
-    }
-    line_offset = gpiod_chip_get_line_offset_from_name(chips[i], trig_gpio);
-    if (line_offset >= 0) {
-      trig_chip = chips[i];
-      trig_line = line_offset;
-    }
-  }
-  if (!echo_chip || echo_line < 0) {
-    pr_err("Failed to find GPIO chip containing echo pin %s\n", echo_gpio);
+  if (gpio_line_add_offset_from_name(&echo, chips, num_paths) < 0) {
+    pr_err("Failed to find GPIO chip containing echo pin %s\n", echo.name);
     return EXIT_FAILURE;
   }
-  if (!trig_chip || trig_line < 0) {
-    pr_err("Failed to find GPIO chip containing trig pin %s\n", trig_gpio);
+  if (gpio_line_add_offset_from_name(&trig, chips, num_paths) < 0) {
+    pr_err("Failed to find GPIO chip containing trig pin %s\n", trig.name);
     return EXIT_FAILURE;
   }
-  if (echo_chip == trig_chip && echo_line == trig_line) {
+  if (echo.chip == trig.chip && echo.offset == trig.offset) {
     pr_err("Echo and trig pins cannot be the same\n");
     return EXIT_FAILURE;
   }
@@ -178,20 +173,15 @@ int main(int argc, char *argv[]) {
    * width will be calculated by subtracting the timestamp of the rising edge
    * from the timestamp of the falling edge.
    */
-  struct gpiod_line_settings *echo_settings = gpiod_line_settings_new();
-  if (!echo_settings) {
-    pr_err("Failed to create line settings for echo pin\n");
-    return EXIT_FAILURE;
-  }
-  call_at_exit(gpio_line_settings_free, echo_settings);
-  if (gpiod_line_settings_set_direction(echo_settings, GPIOD_LINE_DIRECTION_INPUT) < 0) {
+  if (gpio_line_set_direction(&echo, GPIOD_LINE_DIRECTION_INPUT) < 0) {
     pr_err("Failed to set line direction for echo pin\n");
     return EXIT_FAILURE;
   }
-  if (gpiod_line_settings_set_edge_detection(echo_settings, GPIOD_LINE_EDGE_BOTH) < 0) {
+  if (gpio_line_set_edge_detection(&echo, GPIOD_LINE_EDGE_BOTH) < 0) {
     pr_err("Failed to set edge detection for echo pin\n");
     return EXIT_FAILURE;
   }
+  call_at_exit((void (*)(void *))gpiod_line_settings_free, echo.line_settings);
 
   /*
    * Create line settings for the trig pin. The trig pin will be configured as
@@ -200,54 +190,45 @@ int main(int argc, char *argv[]) {
    * set to active for 10 ms, and then set to inactive for 60 ms, and this cycle
    * will repeat indefinitely.
    */
-  struct gpiod_line_settings *trig_settings = gpiod_line_settings_new();
-  if (!trig_settings) {
-    pr_err("Failed to create line settings for trig pin\n");
-    return EXIT_FAILURE;
-  }
-  call_at_exit(gpio_line_settings_free, trig_settings);
-  if (gpiod_line_settings_set_direction(trig_settings, GPIOD_LINE_DIRECTION_OUTPUT) < 0) {
+  if (gpio_line_set_direction(&trig, GPIOD_LINE_DIRECTION_OUTPUT) < 0) {
     pr_err("Failed to set line direction for trig pin\n");
     return EXIT_FAILURE;
   }
+  call_at_exit(gpio_line_settings_free, trig.line_settings);
 
-  struct gpiod_line_config *echo_config = gpiod_line_config_new();
-  if (!echo_config) {
-    pr_err("Failed to create line config for echo pin\n");
+  /*
+   * Configure the GPIO lines for the echo and trig pins. This involves creating
+   * line configuration objects for each pin and adding the corresponding line
+   * settings to those configurations. The line configuration objects will be
+   * used when requesting the lines later in the program. The line configuration
+   * for the echo pin will include the settings for input direction and edge
+   * detection, while the line configuration for the trig pin will include the
+   * settings for output direction.
+   */
+  if (gpio_line_config(&echo) == NULL) {
+    pr_err("Failed to configure line for echo pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(gpio_line_config_free, echo_config);
-  if (gpiod_line_config_add_line_settings(echo_config, (unsigned int[]){(unsigned int)echo_line}, 1, echo_settings) < 0) {
-    pr_err("Failed to add line settings for echo pin\n");
+  call_at_exit(gpio_line_config_free, echo.line_config);
+  if (gpio_line_config(&trig) == NULL) {
+    pr_err("Failed to configure line for trig pin\n");
     return EXIT_FAILURE;
   }
-
-  struct gpiod_line_config *trig_config = gpiod_line_config_new();
-  if (!trig_config) {
-    pr_err("Failed to create line config for trig pin\n");
-    return EXIT_FAILURE;
-  }
-  call_at_exit(gpio_line_config_free, trig_config);
-  if (gpiod_line_config_add_line_settings(trig_config, (unsigned int[]){(unsigned int)trig_line}, 1, trig_settings) < 0) {
-    pr_err("Failed to add line settings for trig pin\n");
-    return EXIT_FAILURE;
-  }
+  call_at_exit(gpio_line_config_free, trig.line_config);
 
   /*
    * Create a request configuration for the echo line.
    */
-  struct gpiod_request_config *echo_request_config = gpiod_request_config_new();
-  if (!echo_request_config) {
-    pr_err("Failed to create request config for echo pin\n");
+  if (gpio_line_set_consumer(&echo, "hc-sr04") < 0) {
+    pr_err("Failed to set consumer for echo pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(gpio_request_config_free, echo_request_config);
-  gpiod_request_config_set_consumer(echo_request_config, "hc-sr04");
-  struct gpiod_line_request *echo_line_request = gpiod_chip_request_lines(echo_chip, echo_request_config, echo_config);
-  if (!echo_line_request) {
+  call_at_exit(gpio_request_config_free, echo.request_config);
+  if (gpio_line_request(&echo) == NULL) {
     pr_err("Failed to request echo line\n");
     return EXIT_FAILURE;
   }
+  call_at_exit(gpio_line_request_release, echo.line_request);
 
   /*
    * Create a request configuration for the trig line. The trig line will be set
@@ -257,18 +238,16 @@ int main(int argc, char *argv[]) {
    * will repeat indefinitely. The edge events on the echo line will be used to
    * measure the pulse width of the signal received from the ultrasonic sensor.
    */
-  struct gpiod_request_config *trig_request_config = gpiod_request_config_new();
-  if (!trig_request_config) {
-    pr_err("Failed to create request config for trig pin\n");
+  if (gpio_line_set_consumer(&trig, "hc-sr04") < 0) {
+    pr_err("Failed to set consumer for trig pin\n");
     return EXIT_FAILURE;
   }
-  call_at_exit(gpio_request_config_free, trig_request_config);
-  gpiod_request_config_set_consumer(trig_request_config, "hc-sr04");
-  struct gpiod_line_request *trig_line_request = gpiod_chip_request_lines(trig_chip, trig_request_config, trig_config);
-  if (!trig_line_request) {
+  call_at_exit(gpio_request_config_free, trig.request_config);
+  if (gpio_line_request(&trig) == NULL) {
     pr_err("Failed to request trig line\n");
     return EXIT_FAILURE;
   }
+  call_at_exit(gpio_line_request_release, trig.line_request);
 
   /*
    * Initially set the trig line to active and wait for edge events on the echo
@@ -296,7 +275,7 @@ int main(int argc, char *argv[]) {
    */
   enum gpiod_line_value trig_value = GPIOD_LINE_VALUE_ACTIVE;
   int64_t timeout_ns = MS_TO_NS(10);
-  if (gpiod_line_request_set_value(trig_line_request, trig_line, trig_value) < 0) {
+  if (gpio_line_set_value(&trig, trig_value) < 0) {
     pr_err("Failed to set initial value for trig line\n");
     return EXIT_FAILURE;
   }
@@ -311,7 +290,7 @@ int main(int argc, char *argv[]) {
   call_at_exit(gpio_edge_event_buffer_free, buffer);
   for (;;) {
     int max_events;
-    if ((max_events = gpiod_line_request_wait_edge_events(echo_line_request, timeout_ns)) < 0) {
+    if ((max_events = gpiod_line_request_wait_edge_events(echo.line_request, timeout_ns)) < 0) {
       pr_err("Failed to wait for edge events on echo line\n");
       return EXIT_FAILURE;
     }
@@ -332,7 +311,7 @@ int main(int argc, char *argv[]) {
         timeout_ns = MS_TO_NS(10);
         break;
       }
-      if (gpiod_line_request_set_value(trig_line_request, trig_line, trig_value) < 0) {
+      if (gpio_line_set_value(&trig, trig_value) < 0) {
         pr_err("Failed to set initial value for trig line\n");
         return EXIT_FAILURE;
       }
@@ -340,7 +319,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
     struct gpio_edge_event_generator generator;
-    gpio_edge_event_generator_init(&generator, echo_line_request, buffer, (size_t)max_events);
+    gpio_edge_event_generator_init(&generator, echo.line_request, buffer, (size_t)max_events);
     for (;;) {
       struct gpiod_edge_event *event = NULL;
       int num_events = gpio_edge_event_generator_next(&generator, &event);
@@ -415,6 +394,11 @@ static void gpio_line_config_free(void *line_config) {
 static void gpio_request_config_free(void *request_config) {
   pr_debug("Freeing request config object at address %p\n", request_config);
   gpiod_request_config_free(request_config);
+}
+
+static void gpio_line_request_release(void *line_request) {
+  pr_debug("Releasing line request object at address %p\n", line_request);
+  gpiod_line_request_release(line_request);
 }
 
 static void gpio_edge_event_buffer_free(void *buffer) {
