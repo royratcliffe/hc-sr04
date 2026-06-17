@@ -105,8 +105,11 @@ int gpio_edge_event_generator_next(struct gpio_edge_event_generator *generator, 
  * the nature of the error, such as whether it was a failure to read edge
  * events, an error in the callback function, or some other issue.
  */
-int gpio_line_request_read_edge_events(struct gpiod_line_request *request, struct gpiod_edge_event_buffer *buffer, size_t max_events,
-                                       int (*yield)(struct gpiod_edge_event *event, void *user_data), void *user_data);
+int gpio_line_request_read_edge_events(struct gpiod_line_request *request /* request to read edge events from */,
+                                       struct gpiod_edge_event_buffer *buffer /* buffer to store edge events */,
+                                       size_t max_events /* maximum number of edge events to read */,
+                                       int (*yield)(struct gpiod_edge_event *event, void *user_data) /* callback function to yield edge events */,
+                                       void *user_data /* user-defined data to pass to the callback function */);
 
 /*!
  * \brief Convert a line value to a string.
