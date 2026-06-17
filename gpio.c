@@ -36,12 +36,12 @@ int gpio_edge_event_generator_next(struct gpio_edge_event_generator *generator, 
     }
     generator->num_events = gpiod_line_request_read_edge_events(generator->request, generator->buffer, max_events);
     if (generator->num_events <= 0) {
-      return (int)generator->num_events;
+      return generator->num_events;
     }
     generator->index = 0;
     generator->max_events -= (size_t)generator->num_events;
   }
-  *event = gpiod_edge_event_buffer_get_event(generator->buffer, (size_t)generator->index);
+  *event = gpiod_edge_event_buffer_get_event(generator->buffer, generator->index);
   if (!*event) {
     return -1;
   }
