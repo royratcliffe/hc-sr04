@@ -1,8 +1,10 @@
 #include "gpio.h"
 #include "pr.h"
 
-void gpio_edge_event_generator_init(struct gpio_edge_event_generator *generator, struct gpiod_line_request *request, struct gpiod_edge_event_buffer *buffer,
-                                    size_t max_events) {
+void gpio_edge_event_generator_init(struct gpio_edge_event_generator *generator /* generator to initialise */,
+                                    struct gpiod_line_request *request /* request to read edge events from */,
+                                    struct gpiod_edge_event_buffer *buffer /* buffer to store edge events */,
+                                    size_t max_events /* maximum number of edge events to generate */) {
   generator->request = request;
   generator->buffer = buffer;
   generator->max_events = max_events;
