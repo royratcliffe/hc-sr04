@@ -47,6 +47,8 @@ static void gpio_request_config_free(void *request_config); /*!< Free a request 
 static void gpio_line_request_release(void *line_request);  /*!< Release a line request object */
 static void gpio_edge_event_buffer_free(void *buffer);      /*!< Free an edge event buffer object */
 
+static volatile sig_atomic_t sig;
+
 static char **paths;
 static ssize_t num_paths;
 static struct gpiod_chip **chips;
@@ -63,8 +65,18 @@ static struct gpiod_chip **chips;
 static struct gpio_line echo, trig;
 
 int main(int argc, char *argv[]) {
-  signal(SIGINT, handle_sig);
-  signal(SIGTERM, handle_sig);
+  struct sigaction sa;
+  sa.sa_handler = handle_sig;
+  sa.sa_flags = 0;
+  sigemptyset(&sa.sa_mask);
+  if (sigaction(SIGINT, &sa, NULL) < 0) {
+    pr_err("Failed to set signal handler for SIGINT\n");
+    return EXIT_FAILURE;
+  }
+  if (sigaction(SIGTERM, &sa, NULL) < 0) {
+    pr_err("Failed to set signal handler for SIGTERM\n");
+    return EXIT_FAILURE;
+  }
 
   num_paths = scan_dir_for_gpiochip_paths("/dev", &paths);
   if (num_paths < 0) {
@@ -312,7 +324,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
   call_at_exit(gpio_edge_event_buffer_free, buffer);
-  for (;;) {
+  while (sig == 0) {
     int max_events;
     if ((max_events = gpiod_line_request_wait_edge_events(echo.line_request, timeout_ns)) < 0) {
       pr_err("Failed to wait for edge events on echo line\n");
@@ -346,6 +358,9 @@ int main(int argc, char *argv[]) {
     struct gpio_edge_event_generator generator;
     gpio_edge_event_generator_init(&generator, echo.line_request, buffer, (size_t)max_events);
     for (;;) {
+      if (sig != 0) {
+        break;
+      }
       struct gpiod_edge_event *event = NULL;
       int num_events = gpio_edge_event_generator_next(&generator, &event);
       if (num_events < 0) {
@@ -384,11 +399,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  return EXIT_SUCCESS;
-}
-
-static void handle_sig(int signum) {
-  pr_info("Received signal %d, exiting...\n", signum);
   /*
    * Clean up resources before exiting. The cleanup includes closing the GPIO
    * chip devices, freeing the memory allocated for the chip pointers, and
@@ -406,6 +416,11 @@ static void handle_sig(int signum) {
   free(chips);
   free_gpiochip_paths(paths, num_paths);
   exit(EXIT_SUCCESS);
+}
+
+static void handle_sig(int signum) {
+  pr_info("Received signal %d, exiting...\n", signum);
+  sig |= 1 << signum;
 }
 
 static void gpio_line_settings_free(void *line_settings) {
