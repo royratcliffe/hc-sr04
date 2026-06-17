@@ -165,6 +165,19 @@ int main(int argc, char *argv[]) {
   }
 
   /*
+   * Close any GPIO chips that are not needed for the echo and trig pins. This
+   * is done to free up resources and avoid potential conflicts with other GPIO
+   * lines that may be on the same chips.
+   */
+  for (size_t i = 0; i < num_paths; i++) {
+    if (chips[i] != echo.chip && chips[i] != trig.chip) {
+      pr_debug("Closing unused GPIO chip at path %s\n", paths[i]);
+      gpiod_chip_close(chips[i]);
+      chips[i] = NULL;
+    }
+  }
+
+  /*
    * Create line settings for the echo pin. The echo pin will be configured as
    * an input with edge detection enabled for both rising and falling edges. The
    * edge events on the echo pin will be used to measure the pulse width of the
@@ -369,7 +382,9 @@ int main(int argc, char *argv[]) {
    * issues with dangling pointers or open file descriptors.
    */
   for (ssize_t i = 0; i < num_paths; i++) {
-    gpiod_chip_close(chips[i]);
+    if (chips[i]) {
+      gpiod_chip_close(chips[i]);
+    }
   }
   free(chips);
   free_gpiochip_paths(paths, num_paths);
