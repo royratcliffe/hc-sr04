@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 static void set_up(void) __attribute__((constructor));
-static void clean_up(void) __attribute__((destructor));
+static void clean_up(void);
 
 static struct cons *at_exit = CONS_NIL;
 
