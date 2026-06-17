@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file call_at_exit.c
+ * \brief Implementation of scheduling and calling functions to be executed at program exit.
+ */
 #include "call_at_exit.h"
 #include "call_at.h"
 #include "cons.h"

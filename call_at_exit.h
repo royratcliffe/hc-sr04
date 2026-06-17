@@ -1,3 +1,12 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
+ */
+
+/*!
+ * \file call_at_exit.h
+ * \brief Header file for scheduling functions to be called at program exit.
+ */
 #ifndef CALL_AT_EXIT_H
 #define CALL_AT_EXIT_H
 
