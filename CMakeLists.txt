@@ -26,6 +26,7 @@ pkg_check_modules(HIREDIS hiredis REQUIRED)
 
 add_executable(hc-sr04
     ${CMAKE_CURRENT_SOURCE_DIR}/main.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/gpio_line.c
     ${CMAKE_CURRENT_SOURCE_DIR}/gpio.c
     ${CMAKE_CURRENT_SOURCE_DIR}/gpiochip.c
     ${CMAKE_CURRENT_SOURCE_DIR}/dirent_ext.c
