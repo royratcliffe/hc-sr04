@@ -17,6 +17,7 @@
 #include "version.h"
 #include "when.h"
 
+#include <errno.h>
 #include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
@@ -40,6 +41,7 @@
 #define MAX_EVENTS 10
 
 static void handle_sig(int signum);
+static void clean_up(void *);
 
 static void gpio_line_settings_free(void *line_settings);   /*!< Free a line settings object */
 static void gpio_line_config_free(void *line_config);       /*!< Free a line config object */
@@ -102,6 +104,7 @@ int main(int argc, char *argv[]) {
     }
     chips[i] = chip;
   }
+  call_at_exit(clean_up, NULL);
 
   static const struct option longopts[] = {{"version", no_argument, NULL, 'V'},
                                            {"verbose", no_argument, NULL, 'v'},
@@ -403,28 +406,20 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  /*
-   * Clean up resources before exiting. The cleanup includes closing the GPIO
-   * chip devices, freeing the memory allocated for the chip pointers, and
-   * freeing the list of GPIO chip paths. This ensures that all resources are
-   * properly released and there are no memory leaks when the program exits. The
-   * cleanup code is important for maintaining good resource management
-   * practices and preventing potential issues with dangling pointers or open
-   * file descriptors.
-   */
+  exit(EXIT_SUCCESS);
+}
+
+static void handle_sig(int signum) { sig |= 1 << signum; }
+
+static void clean_up(void *) {
   for (ssize_t i = 0; i < num_paths; i++) {
     if (chips[i]) {
+      pr_debug("Closing GPIO chip at path %s\n", paths[i]);
       gpiod_chip_close(chips[i]);
     }
   }
   free(chips);
   free_gpiochip_paths(paths, num_paths);
-  exit(EXIT_SUCCESS);
-}
-
-static void handle_sig(int signum) {
-  pr_info("Received signal %d, exiting...\n", signum);
-  sig |= 1 << signum;
 }
 
 static void gpio_line_settings_free(void *line_settings) {
