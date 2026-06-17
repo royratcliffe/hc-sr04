@@ -3,6 +3,14 @@
  * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
  */
 
+/*!
+ * \file gpio.h
+ *
+ * \brief Header file for GPIO line functions.
+ *
+ * \details This header file defines the structures and functions for working
+ * with GPIO lines using the libgpiod library.
+ */
 #ifndef GPIO_H
 #define GPIO_H
 

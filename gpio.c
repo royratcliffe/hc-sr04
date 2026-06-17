@@ -3,6 +3,11 @@
  * SPDX-FileCopyrightText: 2026, Roy Ratcliffe, Northumberland, United Kingdom
  */
 
+/*!
+ * \file gpio.c
+ *
+ * \brief Implementation of GPIO line functions.
+ */
 #include "gpio.h"
 #include "pr.h"
 
