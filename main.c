@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
   exit(EXIT_SUCCESS);
 }
 
-static void handle_sig(int signum) { sig |= 1 << signum; }
+static void handle_sig(int signum) { sig |= 1; }
 
 static void clean_up(void *) {
   for (ssize_t i = 0; i < num_paths; i++) {
