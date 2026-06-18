@@ -14,14 +14,9 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/version.h"
 )
 
-# Find the libgpiod library. Typically, install the libgpiod-dev package on your
-# system to get the necessary headers and library files.
+# Find libgpiod and hiredis libraries
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GPIOD REQUIRED libgpiod)
-
-# Find the hiredis library. Typically, install the libhiredis-dev package on your
-# system to get the necessary headers and library files.
-find_package(PkgConfig REQUIRED)
 pkg_check_modules(HIREDIS REQUIRED hiredis)
 
 add_executable(hc-sr04
