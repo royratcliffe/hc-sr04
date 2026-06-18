@@ -328,8 +328,8 @@ int main(int argc, char *argv[]) {
   }
   call_at_exit(gpio_edge_event_buffer_free, buffer);
   while (sig == 0) {
-    int max_events;
-    if ((max_events = gpiod_line_request_wait_edge_events(echo.line_request, timeout_ns)) < 0) {
+    int pending;
+    if ((pending = gpiod_line_request_wait_edge_events(echo.line_request, timeout_ns)) < 0) {
       if (errno == EINTR) {
         pr_debug("Wait for edge events on echo line interrupted by signal\n");
         continue;
@@ -337,7 +337,7 @@ int main(int argc, char *argv[]) {
       pr_err("Failed to wait for edge events on echo line\n");
       return EXIT_FAILURE;
     }
-    if (max_events == 0) {
+    if (pending == 0) {
       pr_debug("Wait for edge events on echo line timed out\n");
       enum gpiod_line_value value;
       switch (gpio_line_get_value(&trig)) {
@@ -363,7 +363,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
     struct gpio_edge_event_generator generator;
-    gpio_edge_event_generator_init(&generator, echo.line_request, buffer, (size_t)max_events);
+    gpio_edge_event_generator_init(&generator, echo.line_request, buffer, 1);
     for (;;) {
       if (sig != 0) {
         break;
