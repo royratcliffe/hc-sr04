@@ -1,11 +1,11 @@
-# HC-SR04
+# HC-SR04 Ultrasonic Sensor Reader with libgpiod and Redis Stream Output
 
 This is a Linux C application for reading an HC-SR04 ultrasonic distance sensor
 via libgpiod edge events, with optional Redis Stream output.
 
 ## What It Does
 
-- Discovers GPIO chips under /dev and resolves GPIO line names that you pass using the --echo and --trig options.
+- Discovers GPIO chips under `/dev` and resolves GPIO line names that you pass using the `--echo` and `--trig` options.
 - Drives the trigger line in a repeating pulse cycle.
 - Measures echo pulse width from rising and falling edge timestamps.
 - Prints pulse width in nanoseconds to stdout by default.
