@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(hc-sr04)
+project(hc-sr04 VERSION 1.0.0 LANGUAGES C)
 
 # Require the C compiler to support C11 standard. This ensures that the code is
 # compiled with the appropriate language features and standards. GCC version 15
